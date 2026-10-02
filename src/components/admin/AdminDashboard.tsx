@@ -21,6 +21,7 @@ import {
   Building2,
   Clock,
   Sparkles,
+  LogOut,
 } from "lucide-react";
 import { formatToman, formatPersianNumber, formatPersianDate } from "@/lib/utils";
 
@@ -61,13 +62,24 @@ interface RestaurantData {
 
 interface AdminDashboardProps {
   initialRestaurants: RestaurantData[];
+  initialRole?: "SUPER_ADMIN" | "INSPECTOR";
+  adminName?: string;
 }
 
-export default function AdminDashboard({ initialRestaurants }: AdminDashboardProps) {
+export default function AdminDashboard({
+  initialRestaurants,
+  initialRole = "INSPECTOR",
+  adminName = "کاربر سیستم",
+}: AdminDashboardProps) {
   const [restaurants, setRestaurants] = useState<RestaurantData[]>(initialRestaurants);
   const [activeTab, setActiveTab] = useState<"restaurants" | "transactions" | "audit" | "new_sale">("restaurants");
-  const [mode, setMode] = useState<"SUPER_ADMIN" | "INSPECTOR">("INSPECTOR");
+  const [mode, setMode] = useState<"SUPER_ADMIN" | "INSPECTOR">(initialRole);
   const [searchQuery, setSearchQuery] = useState("");
+
+  const handleLogout = () => {
+    document.cookie = "auth_session=; path=/; max-age=0;";
+    window.location.href = "/login";
+  };
 
   // New Sale Form State
   const [newName, setNewName] = useState("");
@@ -186,29 +198,40 @@ export default function AdminDashboard({ initialRestaurants }: AdminDashboardPro
           </div>
         </div>
 
-        {/* Mode Switcher */}
-        <div className="flex items-center gap-2 bg-slate-950 p-1.5 rounded-xl border border-slate-800">
+        {/* Right Section: Mode Switcher & Logout */}
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-2 bg-slate-950 p-1.5 rounded-xl border border-slate-800">
+            <button
+              onClick={() => setMode("INSPECTOR")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                mode === "INSPECTOR"
+                  ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
+                  : "text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              <ShieldCheck className="w-4 h-4 text-amber-400" />
+              ناظر دانشگاه (daneshgah)
+            </button>
+            <button
+              onClick={() => setMode("SUPER_ADMIN")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                mode === "SUPER_ADMIN"
+                  ? "bg-rose-600 text-white shadow-md shadow-rose-600/30"
+                  : "text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              <UserCheck className="w-4 h-4 text-white" />
+              مدیر ارشد (Alireza)
+            </button>
+          </div>
+
           <button
-            onClick={() => setMode("INSPECTOR")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
-              mode === "INSPECTOR"
-                ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
-                : "text-slate-400 hover:text-slate-200"
-            }`}
+            onClick={handleLogout}
+            className="px-3 py-2 rounded-xl text-xs font-bold bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 flex items-center gap-1.5 transition-all"
+            title="خروج امن از پنل ادمین"
           >
-            <ShieldCheck className="w-4 h-4 text-amber-400" />
-            حالت ناظر دانشگاه (دکتر رضایی)
-          </button>
-          <button
-            onClick={() => setMode("SUPER_ADMIN")}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
-              mode === "SUPER_ADMIN"
-                ? "bg-rose-600 text-white shadow-md shadow-rose-600/30"
-                : "text-slate-400 hover:text-slate-200"
-            }`}
-          >
-            <UserCheck className="w-4 h-4 text-white" />
-            حالت مدیر ارشد (علیرضا)
+            <LogOut className="w-3.5 h-3.5" />
+            <span>خروج</span>
           </button>
         </div>
       </div>

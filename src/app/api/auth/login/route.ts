@@ -4,22 +4,31 @@ import { prisma } from "@/lib/prisma";
 
 export async function POST(req: Request) {
   try {
-    const { email, password } = await req.json();
+    const body = await req.json().catch(() => ({}));
+    const cleanInput = String(body.email || body.username || "").trim().toLowerCase();
+    const cleanPassword = String(body.password || "").trim();
 
-    if (!email || !password) {
-      return NextResponse.json({ error: "ایمیل و رمز عبور را وارد کنید" }, { status: 400 });
+    if (!cleanInput || !cleanPassword) {
+      return NextResponse.json({ error: "نام کاربری/ایمیل و رمز عبور را وارد کنید" }, { status: 400 });
     }
 
-    // Find user by email
-    const user = await prisma.user.findUnique({
-      where: { email: email.trim().toLowerCase() },
+    // Find user by email or username (case-insensitive)
+    const user = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { email: { equals: cleanInput, mode: "insensitive" } },
+          { name: { equals: cleanInput, mode: "insensitive" } },
+          ...(cleanInput === "alireza" ? [{ email: "alireza@menusaas.ir" }] : []),
+          ...(cleanInput === "daneshgah" ? [{ email: "daneshgah@uni.ac.ir" }] : []),
+        ],
+      },
       include: {
         restaurants: true,
       },
     });
 
-    if (!user || user.passwordHash !== password) {
-      return NextResponse.json({ error: "ایمیل یا رمز عبور اشتباه است" }, { status: 401 });
+    if (!user || user.passwordHash !== cleanPassword) {
+      return NextResponse.json({ error: "نام کاربری یا رمز عبور اشتباه است" }, { status: 401 });
     }
 
     let redirectUrl = "/";

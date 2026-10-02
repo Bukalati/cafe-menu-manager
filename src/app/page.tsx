@@ -32,14 +32,36 @@ import { formatToman, formatPersianNumber } from "@/lib/utils";
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const restaurants = await prisma.restaurant.findMany({
-    include: {
-      subscriptions: true,
-    },
-    orderBy: {
-      viewCount: "desc",
-    },
-  });
+  let restaurants = [];
+  try {
+    restaurants = await prisma.restaurant.findMany({
+      include: {
+        subscriptions: true,
+      },
+      orderBy: {
+        viewCount: "desc",
+      },
+    });
+  } catch (err) {
+    console.error("Database connection warning on landing:", err);
+    restaurants = [
+      {
+        id: "emarat-demo",
+        name: "کافه عمارت بهشت",
+        slug: "emarat",
+        address: "تهران، خیابان ولیعصر، بالاتر از زعفرانیه، پلاک ۴۲",
+        themeColor: "dark-luxury:coffee:#f59e0b",
+        logoUrl: "https://images.unsplash.com/photo-1510591509098-f4fdc6d0ff04?w=400&auto=format&fit=crop&q=80",
+        viewCount: 3420,
+        subscriptions: [
+          {
+            planName: "اشتراک سالانه طلایی (پلن نامحدود)",
+            status: "ACTIVE",
+          },
+        ],
+      },
+    ];
+  }
 
   const totalScans = restaurants.reduce((acc, r) => acc + r.viewCount, 0);
 
@@ -138,12 +160,14 @@ export default async function HomePage() {
               <span>ثبت‌نام و راه‌اندازی منوی کافه</span>
               <ArrowLeft className="w-4 h-4" />
             </Link>
-            <a
-              href="#cafes"
+            <Link
+              href="/menu/emarat"
+              target="_blank"
               className="w-full sm:w-auto bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 font-bold px-6 py-4 rounded-2xl text-sm flex items-center justify-center gap-2 transition-all"
             >
-              <span>مشاهده نمونه‌های زنده کافه‌ها</span>
-            </a>
+              <ExternalLink className="w-4 h-4 text-amber-400" />
+              <span>مشاهده زنده منوی نمونه (کافه عمارت)</span>
+            </Link>
           </div>
 
           {/* Social Proof Counter */}

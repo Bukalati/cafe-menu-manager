@@ -13,24 +13,14 @@ export default async function PublicMenuPage({
   const { slug } = await params;
   const decodedSlug = decodeURIComponent(slug);
 
-  // Find restaurant by raw or decoded slug
-  const target = await prisma.restaurant.findFirst({
+  // Fetch full restaurant details with categories and items in a single query
+  const restaurant = await prisma.restaurant.findFirst({
     where: {
       OR: [
         { slug: slug },
         { slug: decodedSlug },
       ],
     },
-    select: { id: true },
-  });
-
-  if (!target) {
-    notFound();
-  }
-
-  // Fetch full restaurant details
-  const restaurant = await prisma.restaurant.findUnique({
-    where: { id: target.id },
     include: {
       categories: {
         orderBy: { orderIndex: "asc" },
@@ -50,7 +40,7 @@ export default async function PublicMenuPage({
   // Non-blocking scan activity counter (ensures menu always loads with zero delay)
   prisma.restaurant
     .update({
-      where: { id: target.id },
+      where: { id: restaurant.id },
       data: { viewCount: { increment: 1 } },
     })
     .catch((err) => {

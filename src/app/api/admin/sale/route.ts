@@ -1,9 +1,28 @@
 // src/app/api/admin/sale/route.ts
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 
 export async function POST(req: Request) {
   try {
+    // Auth check: Only authenticated admins/inspectors can create sales
+    const cookieStore = await cookies();
+    const sessionCookie = cookieStore.get("auth_session");
+    if (!sessionCookie?.value) {
+      return NextResponse.json({ error: "عدم دسترسی: لطفاً ابتدا وارد شوید" }, { status: 401 });
+    }
+
+    let session: { role?: string } = {};
+    try {
+      session = JSON.parse(decodeURIComponent(sessionCookie.value));
+    } catch {
+      return NextResponse.json({ error: "نشست کاربری نامعتبر است" }, { status: 401 });
+    }
+
+    if (session.role !== "SUPER_ADMIN" && session.role !== "INSPECTOR") {
+      return NextResponse.json({ error: "سطح دسترسی لازم برای ثبت فروش را ندارید" }, { status: 403 });
+    }
+
     const body = await req.json();
     const { name, ownerName, phone, amount, planName } = body;
 

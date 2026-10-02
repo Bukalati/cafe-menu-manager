@@ -4,9 +4,9 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("🌱 شروع تزریق داده‌های اولیه (Seeding database)...");
+  console.log("🌱 شروع پاکسازی و ساخت دیتابیس تمیز و حرفه‌ای (Clean Seeding)...");
 
-  // 1. پاکسازی داده‌های قبلی برای شروع تمیز
+  // ۱. پاکسازی کامل کلیه رکوردهای تستی و ماک قبلی
   await prisma.transaction.deleteMany();
   await prisma.subscription.deleteMany();
   await prisma.menuItem.deleteMany();
@@ -14,436 +14,317 @@ async function main() {
   await prisma.restaurant.deleteMany();
   await prisma.user.deleteMany();
 
-  // 2. ساخت کاربر سوپر ادمین (علیرضا)
+  console.log("🧹 دیتابیس با موفقیت از کلیه داده‌های تستی و نامنظم پاکسازی شد.");
+
+  // ۲. ساخت اکانت مدیریت پلتفرم (Alireza)
   const superAdmin = await prisma.user.create({
     data: {
-      name: "علیرضا (مدیریت پلتفرم)",
-      email: "admin@menusaas.ir",
+      name: "Alireza",
+      email: "alireza@menusaas.ir",
       phone: "09123456789",
-      passwordHash: "admin123", // در نسخه نهایی هش می‌شود
+      passwordHash: "Alireza123456",
       role: "SUPER_ADMIN",
     },
   });
 
-  // 3. ساخت حساب ناظر دانشگاه (برای ورود استاد)
+  // ۳. ساخت اکانت ناظر دانشگاه (daneshgah)
   const inspector = await prisma.user.create({
     data: {
-      name: "دکتر رضایی (استاد داور و ناظر دانشگاه)",
-      email: "prof@uni.ac.ir",
+      name: "daneshgah",
+      email: "daneshgah@uni.ac.ir",
       phone: "09120000000",
-      passwordHash: "prof123",
+      passwordHash: "daneshgah123",
       role: "INSPECTOR",
     },
   });
 
-  console.log("✅ اکانت‌های مدیریتی و کاربری ساخته شدند:");
-  console.log(`- سوپر ادمین: admin@menusaas.ir (رمز: admin123)`);
-  console.log(`- استاد ناظر: prof@uni.ac.ir (رمز: prof123)`);
+  console.log("✅ اکانت‌های اصلی سیستم با نام کاربری و رمز جدید ایجاد شدند:");
+  console.log(`- ادمین اصلی: Alireza | رمز: Alireza123456 | نقش: SUPER_ADMIN`);
+  console.log(`- ناظر دانشگاه: daneshgah | رمز: daneshgah123 | نقش: INSPECTOR`);
 
-  // 4. لیست ۱۲ کافه و رستوران واقعی با جزئیات فروش اشتراک
-  const sampleRestaurants = [
-    {
-      name: "کافه ویونا (شعبه پارک‌وی)",
-      slug: "viona-parkway",
-      ownerName: "امیرحسین کریمی",
-      email: "viona@gmail.com",
+  // ۴. ساخت کاربر صاحب کافه دمو (نمونه بازاریابی)
+  const demoOwner = await prisma.user.create({
+    data: {
+      name: "امیرحسین تهرانی (مدیر کافه عمارت)",
+      email: "demo@menusaas.ir",
       phone: "09121112233",
-      themeColor: "#b45309",
-      address: "تهران، تقاطع ولیعصر و چمران، پلاک ۱۲",
-      instagram: "viona_cafe",
-      amount: 1200000,
-      plan: "اشتراک سالانه طلایی",
-      method: "ONLINE",
-      gateway: "زرین‌پال (سامانه شتاب)",
-      trackingCode: "ZP-88492011",
-      daysAgo: 24,
-      viewCount: 1420,
+      passwordHash: "cafe123",
+      role: "RESTAURANT_ADMIN",
     },
-    {
-      name: "کافه رستوران بام شیان",
-      slug: "bam-shian",
-      ownerName: "فرزاد اکبری",
-      email: "shian.bam@gmail.com",
-      phone: "09122223344",
-      themeColor: "#0284c7",
-      address: "تهران، پارک جنگلی لویزان، بام شیان",
-      instagram: "bam_shian",
-      amount: 1200000,
-      plan: "اشتراک سالانه طلایی",
-      method: "ONLINE",
-      gateway: "زرین‌پال (سامانه شتاب)",
-      trackingCode: "ZP-91024312",
-      daysAgo: 20,
-      viewCount: 1890,
-    },
-    {
-      name: "رستوران سنتی و شربت‌خانه ترنج",
-      slug: "toranj",
-      ownerName: "سید محمد هاشمی",
-      email: "toranj@gmail.com",
-      phone: "09123334455",
-      themeColor: "#059669",
-      address: "تهران، خیابان شریعتی، بالاتر از پل رومی",
-      instagram: "toranj_complex",
-      amount: 1000000,
-      plan: "اشتراک سالانه نقره‌ای",
-      method: "CARD_TO_CARD",
-      gateway: "کارت‌به‌کارت (تایید شده توسط ادمین)",
-      trackingCode: "CTC-4512903",
-      daysAgo: 18,
-      viewCount: 960,
-    },
-    {
-      name: "کافه لونا (Cafe Luna)",
-      slug: "cafe-luna",
-      ownerName: "نیما مرادی",
-      email: "luna.cafe@gmail.com",
-      phone: "09124445566",
-      themeColor: "#e11d48",
-      address: "تهران، سعادت‌آباد، میدان کاج، نبش نهم",
-      instagram: "luna_cafe_teh",
-      amount: 1200000,
-      plan: "اشتراک سالانه طلایی",
-      method: "ONLINE",
-      gateway: "زرین‌پال (سامانه شتاب)",
-      trackingCode: "ZP-77401928",
-      daysAgo: 16,
-      viewCount: 2310,
-    },
-    {
-      name: "برگر بار گرند (Grand Burger)",
-      slug: "grand-burger",
-      ownerName: "مهدی رسولی",
-      email: "grand.burger@gmail.com",
-      phone: "09125556677",
-      themeColor: "#d97706",
-      address: "تهران، شهرک غرب، بلوار دادمان",
-      instagram: "grandburger_ir",
-      amount: 1000000,
-      plan: "اشتراک سالانه نقره‌ای",
-      method: "ONLINE",
-      gateway: "زرین‌پال (سامانه شتاب)",
-      trackingCode: "ZP-66192840",
-      daysAgo: 14,
-      viewCount: 1650,
-    },
-    {
-      name: "کافه کتاب صبا",
-      slug: "saba-bookcafe",
-      ownerName: "سارا طاهری",
-      email: "saba.books@gmail.com",
-      phone: "09126667788",
-      themeColor: "#4f46e5",
-      address: "تهران، خیابان انقلاب، روبروی دانشگاه تهران",
-      instagram: "saba_bookcafe",
-      amount: 950000,
-      plan: "اشتراک سالانه استاندارد",
-      method: "ONLINE",
-      gateway: "زرین‌پال (سامانه شتاب)",
-      trackingCode: "ZP-55019283",
-      daysAgo: 12,
-      viewCount: 880,
-    },
-    {
-      name: "کافه بیکری نان و نمک",
-      slug: "nan-va-namak",
-      ownerName: "کاوه سلطانی",
-      email: "nannonamak@gmail.com",
-      phone: "09127778899",
-      themeColor: "#ca8a04",
-      address: "تهران، نیاوران، خیابان یاسر، کوچه تبریزی",
-      instagram: "nanonamak_bakery",
-      amount: 1100000,
-      plan: "اشتراک سالانه طلایی",
-      method: "ONLINE",
-      gateway: "زرین‌پال (سامانه شتاب)",
-      trackingCode: "ZP-44102938",
-      daysAgo: 10,
-      viewCount: 1430,
-    },
-    {
-      name: "رستوران ایتالیایی موونا (Moona)",
-      slug: "moona-italian",
-      ownerName: "آرمین فراهانی",
-      email: "moona.food@gmail.com",
-      phone: "09128889900",
-      themeColor: "#16a34a",
-      address: "تهران، پاسداران، نبش بهستان پنجم",
-      instagram: "moona_restaurant",
-      amount: 1200000,
-      plan: "اشتراک سالانه طلایی",
-      method: "ONLINE",
-      gateway: "زرین‌پال (سامانه شتاب)",
-      trackingCode: "ZP-33291048",
-      daysAgo: 8,
-      viewCount: 2750,
-    },
-    {
-      name: "کافه رستوران هیراد",
-      slug: "hirad-cafe",
-      ownerName: "رضا جهانگیری",
-      email: "hirad.cafe@gmail.com",
-      phone: "09129990011",
-      themeColor: "#9333ea",
-      address: "تهران، میرداماد، میدان مادر، مجتمع پایتخت",
-      instagram: "hirad_cafe",
-      amount: 1000000,
-      plan: "اشتراک سالانه نقره‌ای",
-      method: "CARD_TO_CARD",
-      gateway: "کارت‌به‌کارت (تایید شده توسط ادمین)",
-      trackingCode: "CTC-7719204",
-      daysAgo: 6,
-      viewCount: 1120,
-    },
-    {
-      name: "کافه بردگیم کندو (Kandoo)",
-      slug: "kandoo-cafe",
-      ownerName: "احسان مقدم",
-      email: "kandoo.games@gmail.com",
-      phone: "09120001122",
-      themeColor: "#ea580c",
-      address: "تهران، یوسف‌آباد، خیابان فتحی شقاقی",
-      instagram: "kandoo_games",
-      amount: 950000,
-      plan: "اشتراک سالانه استاندارد",
-      method: "ONLINE",
-      gateway: "زرین‌پال (سامانه شتاب)",
-      trackingCode: "ZP-22019284",
-      daysAgo: 4,
-      viewCount: 1340,
-    },
-    {
-      name: "کافه اسپشیالیتی اکسیر (Elixir)",
-      slug: "elixir-coffee",
-      ownerName: "پویا شمس",
-      email: "elixir.roastery@gmail.com",
-      phone: "09121113355",
-      themeColor: "#475569",
-      address: "تهران، گیشا، کوچه ۲۵، پلاک ۷",
-      instagram: "elixir_coffeelab",
-      amount: 1000000,
-      plan: "اشتراک سالانه نقره‌ای",
-      method: "ONLINE",
-      gateway: "زرین‌پال (سامانه شتاب)",
-      trackingCode: "ZP-11092837",
-      daysAgo: 2,
-      viewCount: 790,
-    },
-    {
-      name: "کافه گالری ایوان",
-      slug: "eyvan-gallery",
-      ownerName: "مهسا انصاری",
-      email: "eyvan.art@gmail.com",
-      phone: "09122224466",
-      themeColor: "#db2777",
-      address: "تهران، خیابان فرشته، انتهای کوچه مریم",
-      instagram: "eyvan_gallery_cafe",
-      amount: 1200000,
-      plan: "اشتراک سالانه طلایی",
-      method: "ONLINE",
-      gateway: "زرین‌پال (سامانه شتاب)",
-      trackingCode: "ZP-99018274",
-      daysAgo: 1,
-      viewCount: 650,
-    },
-  ];
+  });
 
-  let totalSalesAmount = 0;
+  // ۵. ساخت کافه شاهکار و کامل برای بازاریابی و ارائه به مشتریان (Showcase Cafe)
+  const demoCafe = await prisma.restaurant.create({
+    data: {
+      userId: demoOwner.id,
+      name: "کافه عمارت بهشت",
+      slug: "emarat",
+      description: "فضایی دنج و اصیل با عطر قهوه ۱۰۰٪ عربیکا تخصصی، دسرهای تازه فرانسوی و منوی کامل صبحانه و عصرانه در عمارت تاریخی بهشت.",
+      address: "تهران، خیابان ولیعصر، بالاتر از زعفرانیه، پلاک ۴۲",
+      phone: "021-22709080",
+      instagram: "emarat_behesht",
+      wifiPassword: "Emarat_Guest_2026",
+      themeColor: "dark-luxury:coffee:#f59e0b",
+      coverUrl: "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=1400&auto=format&fit=crop&q=80",
+      logoUrl: "https://images.unsplash.com/photo-1510591509098-f4fdc6d0ff04?w=400&auto=format&fit=crop&q=80",
+      viewCount: 3420,
+    },
+  });
 
-  for (const item of sampleRestaurants) {
-    totalSalesAmount += item.amount;
+  // ۶. تعریف دسته‌بندی‌های غنی و کامل
+  const catHot = await prisma.category.create({
+    data: {
+      restaurantId: demoCafe.id,
+      title: "قهوه تخصصی و بار گرم ☕",
+      orderIndex: 1,
+    },
+  });
 
-    // ۱. ساخت کاربر صاحب رستوران
-    const owner = await prisma.user.create({
-      data: {
-        name: item.ownerName,
-        email: item.email,
-        phone: item.phone,
-        passwordHash: "cafe123",
-        role: "RESTAURANT_ADMIN",
-      },
-    });
+  const catCold = await prisma.category.create({
+    data: {
+      restaurantId: demoCafe.id,
+      title: "بار سرد و ماکتیل‌های دست‌ساز 🍹",
+      orderIndex: 2,
+    },
+  });
 
-    // ۲. ثبت اطلاعات رستوران
-    const restaurant = await prisma.restaurant.create({
-      data: {
-        userId: owner.id,
-        name: item.name,
-        slug: item.slug,
-        phone: item.phone,
-        address: item.address,
-        instagram: item.instagram,
-        themeColor: item.themeColor,
-        viewCount: item.viewCount,
-        wifiPassword: "cafe" + Math.floor(1000 + Math.random() * 9000),
-        description: `خوش‌آمدید به ${item.name}! سفارش خود را با بهترین کیفیت و در محیطی دلنشین تجربه کنید.`,
-      },
-    });
+  const catDessert = await prisma.category.create({
+    data: {
+      restaurantId: demoCafe.id,
+      title: "کیک و دسرهای تازه بیکری 🍰",
+      orderIndex: 3,
+    },
+  });
 
-    // ۳. ثبت اشتراک فعال ۱ ساله
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - item.daysAgo);
-    const endDate = new Date(startDate);
-    endDate.setFullYear(endDate.getFullYear() + 1);
+  const catBreakfast = await prisma.category.create({
+    data: {
+      restaurantId: demoCafe.id,
+      title: "صبحانه و برانچ ویژه 🍳",
+      orderIndex: 4,
+    },
+  });
 
-    const subscription = await prisma.subscription.create({
-      data: {
-        restaurantId: restaurant.id,
-        planName: item.plan,
-        amount: item.amount,
-        status: "ACTIVE",
-        startDate,
-        endDate,
-        paymentMethod: item.method,
-        trackingCode: item.trackingCode,
-        isApproved: true,
-      },
-    });
+  const catMain = await prisma.category.create({
+    data: {
+      restaurantId: demoCafe.id,
+      title: "غذای اصلی و پاستا 🍝",
+      orderIndex: 5,
+    },
+  });
 
-    // ۴. ثبت تراکنش پرداخت موفق در دیتابیس
-    await prisma.transaction.create({
-      data: {
-        restaurantId: restaurant.id,
-        subscriptionId: subscription.id,
-        amount: item.amount,
-        status: "SUCCESS",
-        trackingCode: item.trackingCode,
-        gateway: item.gateway,
-        paidAt: startDate,
-      },
-    });
-
-    // ۵. اضافه کردن دسته‌بندی‌ها و آیتم‌های منو
-    const catHot = await prisma.category.create({
-      data: {
-        restaurantId: restaurant.id,
-        title: "نوشیدنی گرم و بار گرم",
+  // ۷. افزودن منوی کامل و باکیفیت با تصاویر واقعی و قیمت‌های متداول تهران
+  await prisma.menuItem.createMany({
+    data: [
+      // قهوه گرم
+      {
+        restaurantId: demoCafe.id,
+        categoryId: catHot.id,
+        title: "اسپرسو دوپیو ۱۰۰٪ عربیکا",
+        description: "دبل شات عصاره‌گیری شده از دانه کلمبیا سوپریمو با نت‌های شکلاتی و مرکباتی",
+        price: 75000,
+        imageUrl: "https://images.unsplash.com/photo-1510591509098-f4fdc6d0ff04?w=600&auto=format&fit=crop&q=80",
+        isAvailable: true,
         orderIndex: 1,
-        icon: "Coffee",
       },
-    });
-
-    const catCold = await prisma.category.create({
-      data: {
-        restaurantId: restaurant.id,
-        title: "نوشیدنی سرد و بارتندری",
+      {
+        restaurantId: demoCafe.id,
+        categoryId: catHot.id,
+        title: "کافه لاته با آرت باریستا",
+        description: "شات اسپرسو تازه به همراه شیر فوم‌گرفته مخملی و لته‌آرت اختصاصی",
+        price: 95000,
+        imageUrl: "https://images.unsplash.com/photo-1570968915860-54d5c301fa9f?w=600&auto=format&fit=crop&q=80",
+        isAvailable: true,
         orderIndex: 2,
-        icon: "GlassWater",
       },
-    });
-
-    const catFood = await prisma.category.create({
-      data: {
-        restaurantId: restaurant.id,
-        title: "غذا، برگر و ساندویچ",
+      {
+        restaurantId: demoCafe.id,
+        categoryId: catHot.id,
+        title: "کورتادو اسپانیایی",
+        description: "نسبت مساوی اسپرسو غلیظ و شیر گرم فوم‌گرفته در لیوان شیشه‌ای کلاسیک",
+        price: 85000,
+        imageUrl: "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=600&auto=format&fit=crop&q=80",
+        isAvailable: true,
         orderIndex: 3,
-        icon: "Utensils",
       },
-    });
-
-    const catDessert = await prisma.category.create({
-      data: {
-        restaurantId: restaurant.id,
-        title: "کیک و دسر روز",
+      {
+        restaurantId: demoCafe.id,
+        categoryId: catHot.id,
+        title: "کارامل ماکیاتو مخملی",
+        description: "ترکیب سس کارامل دست‌ساز، شیر بخاردیده و اسپرسو معطر با تاپینگ کارامل",
+        price: 98000,
+        imageUrl: "https://images.unsplash.com/photo-1485808191679-5f86510681a2?w=600&auto=format&fit=crop&q=80",
+        isAvailable: true,
         orderIndex: 4,
-        icon: "Cake",
       },
-    });
+      {
+        restaurantId: demoCafe.id,
+        categoryId: catHot.id,
+        title: "کمکس و قهوه دمی تخصصی",
+        description: "دم‌آوری تک‌خاستگاه اتیوپی یرگاچف با متد کمکس، طعم‌یاد گلی و بادی شفاف",
+        price: 110000,
+        imageUrl: "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=600&auto=format&fit=crop&q=80",
+        isAvailable: true,
+        orderIndex: 5,
+      },
 
-    // آیتم‌های منو
-    await prisma.menuItem.createMany({
-      data: [
-        {
-          restaurantId: restaurant.id,
-          categoryId: catHot.id,
-          title: "اسپرسو دبل (Double Espresso)",
-          description: "۱۰۰٪ عربیکا تخصصی با عصاره‌گیری استاندارد ۳۶ ثانیه‌ای",
-          price: 75000,
-          imageUrl: "https://images.unsplash.com/photo-1510591509098-f4fdc6d0ff04?w=600&auto=format&fit=crop&q=80",
-          isAvailable: true,
-          orderIndex: 1,
-        },
-        {
-          restaurantId: restaurant.id,
-          categoryId: catHot.id,
-          title: "کافه لاته (Caffe Latte)",
-          description: "شات اسپرسو به همراه فوم شیر مخملی و آرت باریستا",
-          price: 95000,
-          imageUrl: "https://images.unsplash.com/photo-1570968915860-54d5c301fa9f?w=600&auto=format&fit=crop&q=80",
-          isAvailable: true,
-          orderIndex: 2,
-        },
-        {
-          restaurantId: restaurant.id,
-          categoryId: catHot.id,
-          title: "آمریکانو داغ (Americano)",
-          description: "دو شات اسپرسو به همراه آب جوش با کرمای غلیظ",
-          price: 80000,
-          imageUrl: "https://images.unsplash.com/photo-1551030173-122aabc4489c?w=600&auto=format&fit=crop&q=80",
-          isAvailable: true,
-          orderIndex: 3,
-        },
-        {
-          restaurantId: restaurant.id,
-          categoryId: catCold.id,
-          title: "موهیتو دست‌ساز تازه",
-          description: "نعناع تازه، لیمو ترش طبیعی، سیروپ شکر قهوه‌ای و آب گازدار",
-          price: 98000,
-          imageUrl: "https://images.unsplash.com/photo-1551538827-9c037cb4f32a?w=600&auto=format&fit=crop&q=80",
-          isAvailable: true,
-          orderIndex: 1,
-        },
-        {
-          restaurantId: restaurant.id,
-          categoryId: catCold.id,
-          title: "آیس کارامل ماکیاتو",
-          description: "شیر سرد، یخ قالبی، سیروپ وانیل، شات اسپرسو و سس کارامل لایه‌ای",
-          price: 110000,
-          imageUrl: "https://images.unsplash.com/photo-1517701604599-bb29b565090c?w=600&auto=format&fit=crop&q=80",
-          isAvailable: true,
-          orderIndex: 2,
-        },
-        {
-          restaurantId: restaurant.id,
-          categoryId: catFood.id,
-          title: "پنینی مرغ و بیکن دودی",
-          description: "سینه مرغ گریل شده، پنیر گودا ذوب شده، سس خردل ملایم در نان چاباتا",
-          price: 185000,
-          imageUrl: "https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=600&auto=format&fit=crop&q=80",
-          isAvailable: true,
-          orderIndex: 1,
-        },
-        {
-          restaurantId: restaurant.id,
-          categoryId: catFood.id,
-          title: "پاستا پنه آلفردو با سینه مرغ",
-          description: "پنه ریگاته، سس خامه و پارمزان تازه، قارچ تفت‌داده و جعفری معطر",
-          price: 240000,
-          imageUrl: "https://images.unsplash.com/photo-1645112411341-6c4fd023714a?w=600&auto=format&fit=crop&q=80",
-          isAvailable: true,
-          orderIndex: 2,
-        },
-        {
-          restaurantId: restaurant.id,
-          categoryId: catDessert.id,
-          title: "چیزکیک نیویورکی تنوری",
-          description: "بافت کرمی لطیف با کراست بیسکویت لوتوس و سس توت‌فرنگی طبیعی",
-          price: 125000,
-          imageUrl: "https://images.unsplash.com/photo-1533134242443-d4fd215305ad?w=600&auto=format&fit=crop&q=80",
-          isAvailable: true,
-          orderIndex: 1,
-        },
-      ],
-    });
-  }
+      // بار سرد
+      {
+        restaurantId: demoCafe.id,
+        categoryId: catCold.id,
+        title: "آیس لاته وانیل ماداگاسکار",
+        description: "اسپرسو تازه روی تکه‌های یخ کریستالی، شیر سرد و سیروپ ارگانیک وانیل",
+        price: 98000,
+        imageUrl: "https://images.unsplash.com/photo-1517701604599-bb29b565090c?w=600&auto=format&fit=crop&q=80",
+        isAvailable: true,
+        orderIndex: 1,
+      },
+      {
+        restaurantId: demoCafe.id,
+        categoryId: catCold.id,
+        title: "موهیتو دست‌ساز تازه کوبیده",
+        description: "برگ نعناع تازه کوبیده، لیمو ترش طبیعی، شکر قهوه‌ای و آب گازدار سودا",
+        price: 105000,
+        imageUrl: "https://images.unsplash.com/photo-1551538827-9c037cb4f32a?w=600&auto=format&fit=crop&q=80",
+        isAvailable: true,
+        orderIndex: 2,
+      },
+      {
+        restaurantId: demoCafe.id,
+        categoryId: catCold.id,
+        title: "سان‌ست ماکتیل استوایی",
+        description: "لایه‌بندی طبیعی پشن‌فروت، آب انار تازه و پرتقال دست‌چین با جلوه رنگی غروب",
+        price: 115000,
+        imageUrl: "https://images.unsplash.com/photo-1536935338788-846bb9981813?w=600&auto=format&fit=crop&q=80",
+        isAvailable: true,
+        orderIndex: 3,
+      },
+      {
+        restaurantId: demoCafe.id,
+        categoryId: catCold.id,
+        title: "شیک نوتلا و فندق برشته",
+        description: "بستنی وانیلی خالص، نوتلا اصل ایتالیایی و پودر فندق رست‌شده دست‌ساز",
+        price: 135000,
+        imageUrl: "https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=600&auto=format&fit=crop&q=80",
+        isAvailable: true,
+        orderIndex: 4,
+      },
 
-  console.log(`🎉 با موفقیت ۱۲ رستوران با تمام منوها و اشتراک‌ها ثبت شدند.`);
-  console.log(`💰 مجموع درآمد ثبت‌شده برای ارائه به دانشگاه: ${totalSalesAmount.toLocaleString("fa-IR")} تومان`);
+      // کیک و دسر
+      {
+        restaurantId: demoCafe.id,
+        categoryId: catDessert.id,
+        title: "چیزکیک سن‌سباستین با سس شکلات بلژیکی",
+        description: "پخت روز با بافت لطیف کرمی، لایه سوخته کاراملی و سس گاناش شکلات تلخ ۶۰٪",
+        price: 145000,
+        imageUrl: "https://images.unsplash.com/photo-1533134242443-d4fd215305ad?w=600&auto=format&fit=crop&q=80",
+        isAvailable: true,
+        orderIndex: 1,
+      },
+      {
+        restaurantId: demoCafe.id,
+        categoryId: catDessert.id,
+        title: "وافل داغ بلژیکی با میوه فصل",
+        description: "وافل تازه پخته‌شده ترد، اسکوپ بستنی وانیلی، توت‌فرنگی تازه و سس شکلات",
+        price: 135000,
+        imageUrl: "https://images.unsplash.com/photo-1562376552-0d160a2f238d?w=600&auto=format&fit=crop&q=80",
+        isAvailable: true,
+        orderIndex: 2,
+      },
+      {
+        restaurantId: demoCafe.id,
+        categoryId: catDessert.id,
+        title: "کروسان فرانسوی کره و عسل",
+        description: "نان کروسان لایه‌ای و کره‌ای داغ همراه با عسل طبیعی کوهستان",
+        price: 85000,
+        imageUrl: "https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=600&auto=format&fit=crop&q=80",
+        isAvailable: true,
+        orderIndex: 3,
+      },
+
+      // صبحانه
+      {
+        restaurantId: demoCafe.id,
+        categoryId: catBreakfast.id,
+        title: "بشقاب صبحانه انگلیسی کامل",
+        description: "تخم‌مرغ نیمرو، سوسیس گریل، بیکن گوشت، خوراک لوبیا گرم، قارچ تفت‌داده و نان تست",
+        price: 210000,
+        imageUrl: "https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?w=600&auto=format&fit=crop&q=80",
+        isAvailable: true,
+        orderIndex: 1,
+      },
+      {
+        restaurantId: demoCafe.id,
+        categoryId: catBreakfast.id,
+        title: "املت اسفناج، گوجه و پنیر فتا",
+        description: "سه عدد تخم‌مرغ مزرعه، برگ اسفناج تفت‌داده با سیر تازه، گوجه گیلاسی و نان سنگک داغ",
+        price: 115000,
+        imageUrl: "https://images.unsplash.com/photo-1525351484163-7529414344d8?w=600&auto=format&fit=crop&q=80",
+        isAvailable: true,
+        orderIndex: 2,
+      },
+
+      // غذای اصلی
+      {
+        restaurantId: demoCafe.id,
+        categoryId: catMain.id,
+        title: "پاستا پنه آلفردو با فیله مرغ گریل",
+        description: "پنه ریگاته با خامه تازه، کره، پنیر پارمزان ۲۴ ماهه، قارچ قهوه‌ای و فیله مرغ مرینیت‌شده",
+        price: 195000,
+        imageUrl: "https://images.unsplash.com/photo-1645112411341-6c4fd023714a?w=600&auto=format&fit=crop&q=80",
+        isAvailable: true,
+        orderIndex: 1,
+      },
+      {
+        restaurantId: demoCafe.id,
+        categoryId: catMain.id,
+        title: "اسمش برگر دست‌ساز با سیب‌زمینی",
+        description: "۱۸۰ گرم گوشت گوساله تازه، پنیر چدار آب‌شده، پیاز کاراملی، سس مخصوص و سیب‌زمینی سرخ‌کرده",
+        price: 240000,
+        imageUrl: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600&auto=format&fit=crop&q=80",
+        isAvailable: true,
+        orderIndex: 2,
+      },
+    ],
+  });
+
+  // ۸. ایجاد اشتراک سالانه طلایی برای کافه دمو
+  const startDate = new Date();
+  const endDate = new Date(startDate);
+  endDate.setFullYear(endDate.getFullYear() + 1);
+
+  const sub = await prisma.subscription.create({
+    data: {
+      restaurantId: demoCafe.id,
+      planName: "اشتراک سالانه طلایی (پلن نامحدود)",
+      amount: 1200000,
+      status: "ACTIVE",
+      startDate,
+      endDate,
+      paymentMethod: "ONLINE",
+      trackingCode: "ZP-99482012",
+      isApproved: true,
+    },
+  });
+
+  await prisma.transaction.create({
+    data: {
+      restaurantId: demoCafe.id,
+      subscriptionId: sub.id,
+      amount: 1200000,
+      status: "SUCCESS",
+      trackingCode: "ZP-99482012",
+      gateway: "زرین‌پال (سامانه شتاب)",
+      paidAt: startDate,
+    },
+  });
+
+  console.log("🌟 منوی نمونه باکیفیت و کامل «کافه عمارت بهشت» با آدرس /menu/emarat ساخته شد.");
+  console.log("🎉 عملیات پاکسازی و بازآرایی دیتابیس با موفقیت به پایان رسید!");
 }
 
 main()
   .catch((e) => {
-    console.error("❌ خطا در اجرای Seed:", e);
+    console.error("❌ خطا در اجرای اسکریپت دیتابیس:", e);
     process.exit(1);
   })
   .finally(async () => {

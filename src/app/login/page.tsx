@@ -44,6 +44,12 @@ function LoginContent() {
     if (searchParams.get("tab") === "register") {
       setActiveTab("register");
     }
+    const err = searchParams.get("error");
+    if (err === "admin_required") {
+      setError("جهت دسترسی به پنل مدیریت یا نظارت، لطفاً با نام کاربری و رمز عبور خود وارد شوید.");
+    } else if (err === "unauthorized") {
+      setError("حساب کاربری شما سطح دسترسی لازم برای پنل مدیریت را ندارد.");
+    }
   }, [searchParams]);
 
   // Handle Login
@@ -53,7 +59,7 @@ function LoginContent() {
     const loginPass = customPass || password;
 
     if (!loginEmail || !loginPass) {
-      setError("لطفاً ایمیل و کلمه عبور را وارد کنید");
+      setError("لطفاً نام کاربری یا ایمیل و کلمه عبور را وارد کنید");
       return;
     }
 
@@ -79,12 +85,6 @@ function LoginContent() {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleQuickLogin = (quickEmail: string, quickPass: string) => {
-    setEmail(quickEmail);
-    setPassword(quickPass);
-    handleLogin(undefined, quickEmail, quickPass);
   };
 
   // Handle Register
@@ -182,100 +182,54 @@ function LoginContent() {
         {/* Form Box */}
         <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl">
           {error && (
-            <div className="mb-5 bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs p-3 rounded-xl text-center">
+            <div className="mb-5 bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs p-3 rounded-xl text-center leading-relaxed">
               {error}
             </div>
           )}
 
           {/* TAB 1: LOGIN FORM */}
           {activeTab === "login" && (
-            <>
-              <form onSubmit={handleLogin} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">ایمیل یا نام کاربری:</label>
-                  <div className="relative">
-                    <Mail className="w-4 h-4 text-slate-500 absolute right-3.5 top-1/2 -translate-y-1/2" />
-                    <input
-                      type="email"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="name@example.com"
-                      className="w-full bg-slate-950 border border-slate-700/80 rounded-xl pr-10 pl-4 py-2.5 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-rose-500 transition-colors"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">کلمه عبور:</label>
-                  <div className="relative">
-                    <Lock className="w-4 h-4 text-slate-500 absolute right-3.5 top-1/2 -translate-y-1/2" />
-                    <input
-                      type="password"
-                      required
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="••••••••"
-                      className="w-full bg-slate-950 border border-slate-700/80 rounded-xl pr-10 pl-4 py-2.5 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-rose-500 transition-colors"
-                    />
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full bg-rose-600 hover:bg-rose-500 text-white font-bold py-3 rounded-xl text-xs shadow-lg shadow-rose-600/30 transition-all disabled:opacity-50 mt-2"
-                >
-                  {isLoading ? "در حال ورود..." : "ورود به حساب کاربری"}
-                </button>
-              </form>
-
-              {/* Quick Demo Login Buttons */}
-              <div className="mt-8 pt-6 border-t border-slate-800">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400 mb-3">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                  ورود سریع تستی با نقش‌های تعریف‌شده:
-                </div>
-
-                <div className="space-y-2">
-                  <button
-                    type="button"
-                    onClick={() => handleQuickLogin("prof@uni.ac.ir", "prof123")}
-                    className="w-full bg-indigo-600/15 hover:bg-indigo-600/25 border border-indigo-500/30 text-indigo-300 p-2.5 rounded-xl text-xs flex items-center justify-between transition-all"
-                  >
-                    <div className="flex items-center gap-2">
-                      <ShieldCheck className="w-4 h-4 text-amber-400" />
-                      <span className="font-semibold">دکتر رضایی (استاد داور و ناظر دانشگاه)</span>
-                    </div>
-                    <span className="text-[10px] text-indigo-400">ورود به بازرسی</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleQuickLogin("viona@gmail.com", "cafe123")}
-                    className="w-full bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-300 p-2.5 rounded-xl text-xs flex items-center justify-between transition-all"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Coffee className="w-4 h-4 text-amber-400" />
-                      <span className="font-semibold">کافه ویونا (پنل اختصاصی کافه‌دار)</span>
-                    </div>
-                    <span className="text-[10px] text-amber-400">ورود کافه</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleQuickLogin("admin@menusaas.ir", "admin123")}
-                    className="w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 p-2.5 rounded-xl text-xs flex items-center justify-between transition-all"
-                  >
-                    <div className="flex items-center gap-2">
-                      <UserCheck className="w-4 h-4 text-rose-400" />
-                      <span className="font-semibold">علیرضا (مدیریت ارشد پلتفرم)</span>
-                    </div>
-                    <span className="text-[10px] text-slate-400">ورود سوپرادمین</span>
-                  </button>
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">نام کاربری یا ایمیل:</label>
+                <div className="relative">
+                  <Mail className="w-4 h-4 text-slate-500 absolute right-3.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="نام کاربری (مانند Alireza یا daneshgah) یا ایمیل"
+                    className="w-full bg-slate-950 border border-slate-700/80 rounded-xl pr-10 pl-4 py-2.5 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-rose-500 transition-colors"
+                    autoComplete="username"
+                  />
                 </div>
               </div>
-            </>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">کلمه عبور:</label>
+                <div className="relative">
+                  <Lock className="w-4 h-4 text-slate-500 absolute right-3.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full bg-slate-950 border border-slate-700/80 rounded-xl pr-10 pl-4 py-2.5 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-rose-500 transition-colors"
+                    autoComplete="current-password"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full bg-rose-600 hover:bg-rose-500 text-white font-bold py-3 rounded-xl text-xs shadow-lg shadow-rose-600/30 transition-all disabled:opacity-50 mt-2"
+              >
+                {isLoading ? "در حال ورود..." : "ورود به حساب کاربری"}
+              </button>
+            </form>
           )}
 
           {/* TAB 2: REGISTER FORM */}
