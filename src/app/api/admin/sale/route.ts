@@ -11,11 +11,17 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "فیلدهای ضروری را وارد کنید" }, { status: 400 });
     }
 
-    const slug = name
-      .toLowerCase()
+    // Clean, URL-safe ASCII slug to prevent any 404 issues in Next.js routing
+    const randomSuffix = Math.floor(100 + Math.random() * 900);
+    const cleanAscii = name
+      .replace(/[^\w\s-]/g, "")
       .trim()
       .replace(/\s+/g, "-")
-      .replace(/[^\w\u0600-\u06FF\-]/g, "") + "-" + Math.floor(100 + Math.random() * 900);
+      .toLowerCase();
+
+    const slug = cleanAscii && cleanAscii.length > 2
+      ? `${cleanAscii}-${randomSuffix}`
+      : `cafe-${Date.now().toString(36)}-${randomSuffix}`;
 
     const email = `owner_${Date.now()}@example.com`;
 
@@ -37,11 +43,65 @@ export async function POST(req: Request) {
         name,
         slug,
         phone,
-        viewCount: 15,
+        viewCount: 1,
+        themeColor: "#e11d48",
+        description: `خوش‌آمدید به ${name}! منوی آنلاین ما در خدمت شماست.`,
       },
     });
 
-    // 3. Create Subscription (1 year)
+    // 3. Create Default Categories and Sample Items so dashboard is never empty
+    const catHot = await prisma.category.create({
+      data: {
+        restaurantId: restaurant.id,
+        title: "نوشیدنی گرم",
+        orderIndex: 1,
+      },
+    });
+
+    const catCold = await prisma.category.create({
+      data: {
+        restaurantId: restaurant.id,
+        title: "نوشیدنی سرد",
+        orderIndex: 2,
+      },
+    });
+
+    await prisma.menuItem.createMany({
+      data: [
+        {
+          restaurantId: restaurant.id,
+          categoryId: catHot.id,
+          title: "اسپرسو دبل تخصصی",
+          description: "۱۰۰٪ عربیکا با عصاره‌گیری استاندارد",
+          price: 75000,
+          imageUrl: "https://images.unsplash.com/photo-1510591509098-f4fdc6d0ff04?w=600&auto=format&fit=crop&q=80",
+          isAvailable: true,
+          orderIndex: 1,
+        },
+        {
+          restaurantId: restaurant.id,
+          categoryId: catHot.id,
+          title: "کافه لاته با آرت",
+          description: "شات اسپرسو به همراه شیر مخملی",
+          price: 95000,
+          imageUrl: "https://images.unsplash.com/photo-1570968915860-54d5c301fa9f?w=600&auto=format&fit=crop&q=80",
+          isAvailable: true,
+          orderIndex: 2,
+        },
+        {
+          restaurantId: restaurant.id,
+          categoryId: catCold.id,
+          title: "موهیتو دست‌ساز تازه",
+          description: "نعناع تازه، لیمو طبیعی و آب گازدار",
+          price: 98000,
+          imageUrl: "https://images.unsplash.com/photo-1551538827-9c037cb4f32a?w=600&auto=format&fit=crop&q=80",
+          isAvailable: true,
+          orderIndex: 1,
+        },
+      ],
+    });
+
+    // 4. Create Subscription (1 year)
     const startDate = new Date();
     const endDate = new Date(startDate);
     endDate.setFullYear(endDate.getFullYear() + 1);
@@ -62,7 +122,7 @@ export async function POST(req: Request) {
       },
     });
 
-    // 4. Create Transaction
+    // 5. Create Transaction
     await prisma.transaction.create({
       data: {
         restaurantId: restaurant.id,
@@ -82,6 +142,11 @@ export async function POST(req: Request) {
         user: true,
         subscriptions: true,
         transactions: true,
+        categories: {
+          include: {
+            items: true,
+          },
+        },
       },
     });
 

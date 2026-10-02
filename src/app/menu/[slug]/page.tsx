@@ -11,10 +11,26 @@ export default async function PublicMenuPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
+  const decodedSlug = decodeURIComponent(slug);
+
+  // Find restaurant by raw or decoded slug
+  const target = await prisma.restaurant.findFirst({
+    where: {
+      OR: [
+        { slug: slug },
+        { slug: decodedSlug },
+      ],
+    },
+    select: { id: true },
+  });
+
+  if (!target) {
+    notFound();
+  }
 
   // Increment view count to record scan activity
   const restaurant = await prisma.restaurant.update({
-    where: { slug },
+    where: { id: target.id },
     data: {
       viewCount: {
         increment: 1,
@@ -30,11 +46,7 @@ export default async function PublicMenuPage({
         },
       },
     },
-  }).catch(() => null);
-
-  if (!restaurant) {
-    notFound();
-  }
+  });
 
   return <CustomerMenu restaurant={restaurant} />;
 }

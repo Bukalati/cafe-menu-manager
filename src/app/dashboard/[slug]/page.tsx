@@ -11,9 +11,15 @@ export default async function RestaurantDashboardPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
+  const decodedSlug = decodeURIComponent(slug);
 
-  const rawRestaurant = await prisma.restaurant.findUnique({
-    where: { slug },
+  const rawRestaurant = await prisma.restaurant.findFirst({
+    where: {
+      OR: [
+        { slug: slug },
+        { slug: decodedSlug },
+      ],
+    },
     include: {
       categories: {
         orderBy: { orderIndex: "asc" },

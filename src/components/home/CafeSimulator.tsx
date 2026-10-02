@@ -47,12 +47,14 @@ export default function CafeSimulator() {
           phone: phone || "09120000000",
           amount: 1200000,
           planName: "اشتراک سالانه طلایی",
+          themeColor: color,
         }),
       });
 
       if (res.ok) {
         const created = await res.json();
-        router.push(`/dashboard/${created.slug}`);
+        // Use direct navigation to ensure fresh server data load
+        window.location.href = `/dashboard/${created.slug}`;
       } else {
         alert("خطا در ایجاد کافه");
       }

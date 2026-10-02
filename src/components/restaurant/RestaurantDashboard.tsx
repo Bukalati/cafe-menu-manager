@@ -27,6 +27,7 @@ import {
   Sparkles,
   Camera,
   X,
+  Sliders,
 } from "lucide-react";
 import { formatToman, formatPersianNumber, formatPersianDate } from "@/lib/utils";
 
@@ -84,7 +85,7 @@ const PRESET_IMAGES = [
 ];
 
 const THEME_PALETTES = [
-  { name: "رز سلطنتی", color: "#e11d48" },
+  { name: "زرشکی سلطنتی", color: "#e11d48" },
   { name: "کافی کهربایی", color: "#b45309" },
   { name: "سبز کورتادو", color: "#059669" },
   { name: "آبی کافه‌ای", color: "#0284c7" },
@@ -97,11 +98,11 @@ export default function RestaurantDashboard({ restaurant }: RestaurantDetailsPro
   const [activeTab, setActiveTab] = useState<"menu" | "customization" | "qr" | "subscription">("menu");
 
   // State for Categories and Items
-  const [categories, setCategories] = useState<CategoryData[]>(restaurant.categories);
-  const [activeCategory, setActiveCategory] = useState<string>(categories[0]?.id || "");
+  const [categories, setCategories] = useState<CategoryData[]>(restaurant.categories || []);
+  const [activeCategory, setActiveCategory] = useState<string>(restaurant.categories?.[0]?.id || "");
   const [newCatTitle, setNewCatTitle] = useState("");
 
-  // New Item State
+  // New Item State (Default image from preset)
   const [newItemTitle, setNewItemTitle] = useState("");
   const [newItemPrice, setNewItemPrice] = useState("");
   const [newItemDesc, setNewItemDesc] = useState("");
@@ -125,6 +126,8 @@ export default function RestaurantDashboard({ restaurant }: RestaurantDetailsPro
   const [cafeInstagram, setCafeInstagram] = useState(restaurant.instagram || "");
   const [cafeWifi, setCafeWifi] = useState(restaurant.wifiPassword || "");
   const [cafeColor, setCafeColor] = useState(restaurant.themeColor || "#e11d48");
+  const [cafeLogo, setCafeLogo] = useState(restaurant.logoUrl || "");
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [settingsSavedSuccess, setSettingsSavedSuccess] = useState(false);
 
@@ -139,12 +142,14 @@ export default function RestaurantDashboard({ restaurant }: RestaurantDetailsPro
     ? `${window.location.origin}/menu/${restaurant.slug}`
     : `/menu/${restaurant.slug}`;
 
-  // Handle Image File Upload
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, target: "new" | "edit") => {
+  // Handle Image File Upload (Item or Logo)
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, target: "new_item" | "edit_item" | "logo") => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setIsUploading(true);
+    if (target === "logo") setIsUploadingLogo(true);
+    else setIsUploading(true);
+
     const formData = new FormData();
     formData.append("file", file);
 
@@ -155,13 +160,15 @@ export default function RestaurantDashboard({ restaurant }: RestaurantDetailsPro
       });
       const data = await res.json();
       if (data.url) {
-        if (target === "new") setNewItemImage(data.url);
-        if (target === "edit") setEditImage(data.url);
+        if (target === "new_item") setNewItemImage(data.url);
+        if (target === "edit_item") setEditImage(data.url);
+        if (target === "logo") setCafeLogo(data.url);
       }
     } catch {
       alert("خطا در بارگذاری تصویر");
     } finally {
       setIsUploading(false);
+      setIsUploadingLogo(false);
     }
   };
 
@@ -190,7 +197,10 @@ export default function RestaurantDashboard({ restaurant }: RestaurantDetailsPro
   // Add Item to Menu
   const handleAddItem = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newItemTitle || !newItemPrice || !activeCategory) return;
+    if (!newItemTitle || !newItemPrice || !activeCategory) {
+      alert("لطفاً نام، قیمت و دسته‌بندی را مشخص کنید");
+      return;
+    }
 
     setIsAddingItem(true);
     try {
@@ -219,6 +229,7 @@ export default function RestaurantDashboard({ restaurant }: RestaurantDetailsPro
         setNewItemTitle("");
         setNewItemPrice("");
         setNewItemDesc("");
+        alert("✅ آیتم جدید با عکس با موفقیت به منو اضافه شد!");
       }
     } catch {
       alert("خطا در ایجاد آیتم منو");
@@ -227,7 +238,7 @@ export default function RestaurantDashboard({ restaurant }: RestaurantDetailsPro
     }
   };
 
-  // Open Edit Modal
+  // Open Edit Modal for Item
   const openEditModal = (item: MenuItemData) => {
     setEditingItem(item);
     setEditTitle(item.title);
@@ -272,6 +283,7 @@ export default function RestaurantDashboard({ restaurant }: RestaurantDetailsPro
           }))
         );
         setEditingItem(null);
+        alert("✅ آیتم با موفقیت ویرایش و ذخیره شد!");
       }
     } catch {
       alert("خطا در ویرایش آیتم");
@@ -338,11 +350,13 @@ export default function RestaurantDashboard({ restaurant }: RestaurantDetailsPro
           instagram: cafeInstagram,
           wifiPassword: cafeWifi,
           themeColor: cafeColor,
+          logoUrl: cafeLogo,
         }),
       });
 
       if (res.ok) {
         setSettingsSavedSuccess(true);
+        alert("✅ مشخصات و هویت بصری کافه با موفقیت در دیتابیس ابری ذخیره شد!");
         setTimeout(() => setSettingsSavedSuccess(false), 3000);
       }
     } catch {
@@ -366,7 +380,7 @@ export default function RestaurantDashboard({ restaurant }: RestaurantDetailsPro
     document.body.removeChild(downloadLink);
   };
 
-  const sub = restaurant.subscriptions[0];
+  const sub = restaurant.subscriptions?.[0];
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-4 md:p-8 font-sans selection:bg-rose-500 selection:text-white">
@@ -381,10 +395,15 @@ export default function RestaurantDashboard({ restaurant }: RestaurantDetailsPro
             <ArrowRight className="w-5 h-5" />
           </Link>
           <div
-            className="w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-lg font-bold"
+            className="w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-lg font-bold overflow-hidden"
             style={{ backgroundColor: cafeColor }}
           >
-            <Store className="w-6 h-6" />
+            {cafeLogo ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={cafeLogo} alt="لوگوی کافه" className="w-full h-full object-cover" />
+            ) : (
+              <Store className="w-6 h-6" />
+            )}
           </div>
           <div>
             <div className="flex items-center gap-2">
@@ -418,54 +437,54 @@ export default function RestaurantDashboard({ restaurant }: RestaurantDetailsPro
         </div>
       </div>
 
-      {/* Main Tabs Navigation */}
-      <div className="max-w-7xl mx-auto mb-6 flex flex-wrap items-center gap-2 border-b border-slate-800 pb-4">
+      {/* Main Tabs Navigation Bar */}
+      <div className="max-w-7xl mx-auto mb-8 bg-slate-900/90 border border-slate-800 p-2 rounded-2xl shadow-lg flex flex-wrap items-center gap-2">
         <button
           onClick={() => setActiveTab("menu")}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+          className={`flex-1 min-w-[200px] py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 ${
             activeTab === "menu"
               ? "bg-rose-600 text-white shadow-lg shadow-rose-600/30"
-              : "bg-slate-900 text-slate-400 hover:text-white"
+              : "bg-slate-950/60 text-slate-400 hover:text-white"
           }`}
         >
-          <Layers className="w-4 h-4" />
-          مدیریت آیتم‌ها، تصاویر و قیمت‌ها
+          <Layers className="w-4 h-4 text-amber-400" />
+          ۱. مدیریت منو، آپلود عکس و قیمت‌ها
         </button>
 
         <button
           onClick={() => setActiveTab("customization")}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+          className={`flex-1 min-w-[200px] py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 ${
             activeTab === "customization"
               ? "bg-rose-600 text-white shadow-lg shadow-rose-600/30"
-              : "bg-slate-900 text-slate-400 hover:text-white"
+              : "bg-slate-950/60 text-slate-400 hover:text-white"
           }`}
         >
-          <Palette className="w-4 h-4" />
-          شخصی‌سازی نام، رنگ و مشخصات کافه
+          <Palette className="w-4 h-4 text-sky-400" />
+          ۲. ویرایش اطلاعات کافه (اسم، آدرس، لوگو و تم)
         </button>
 
         <button
           onClick={() => setActiveTab("qr")}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+          className={`flex-1 min-w-[160px] py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 ${
             activeTab === "qr"
               ? "bg-rose-600 text-white shadow-lg shadow-rose-600/30"
-              : "bg-slate-900 text-slate-400 hover:text-white"
+              : "bg-slate-950/60 text-slate-400 hover:text-white"
           }`}
         >
-          <QrCode className="w-4 h-4" />
-          استودیو کیو‌آرکد میزها
+          <QrCode className="w-4 h-4 text-emerald-400" />
+          ۳. استودیو و دانلود QR Code
         </button>
 
         <button
           onClick={() => setActiveTab("subscription")}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+          className={`flex-1 min-w-[160px] py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 ${
             activeTab === "subscription"
               ? "bg-rose-600 text-white shadow-lg shadow-rose-600/30"
-              : "bg-slate-900 text-slate-400 hover:text-white"
+              : "bg-slate-950/60 text-slate-400 hover:text-white"
           }`}
         >
-          <Calendar className="w-4 h-4" />
-          اشتراک و فاکتور تجاری
+          <Calendar className="w-4 h-4 text-purple-400" />
+          ۴. اشتراک و فاکتور
         </button>
       </div>
 
@@ -480,10 +499,10 @@ export default function RestaurantDashboard({ restaurant }: RestaurantDetailsPro
                 <div>
                   <h2 className="text-base font-bold text-white flex items-center gap-2">
                     <Layers className="w-5 h-5 text-rose-500" />
-                    دسته‌بندی‌ها و آیتم‌های منو
+                    دسته‌بندی‌های منو
                   </h2>
                   <p className="text-xs text-slate-400 mt-0.5">
-                    کلیک روی دکمه ویرایش برای تغییر عکس، نام یا قیمت هر محصول
+                    دسته‌بندی مورد نظر را انتخاب کنید و آیتم‌های آن را ویرایش یا اضافه نمایید.
                   </p>
                 </div>
 
@@ -517,16 +536,22 @@ export default function RestaurantDashboard({ restaurant }: RestaurantDetailsPro
                         : "bg-slate-800 text-slate-400 hover:text-slate-200"
                     }`}
                   >
-                    {cat.title} ({formatPersianNumber(cat.items.length)})
+                    {cat.title} ({formatPersianNumber(cat.items?.length || 0)})
                   </button>
                 ))}
               </div>
 
               {/* Items List */}
               <div className="space-y-3">
+                {categories.length === 0 && (
+                  <div className="text-center py-8 text-slate-500 text-xs">
+                    هنوز دسته‌بندی ایجاد نشده است. از فرم بالا اولین دسته را اضافه کنید.
+                  </div>
+                )}
+
                 {categories
                   .find((c) => c.id === activeCategory)
-                  ?.items.map((item) => (
+                  ?.items?.map((item) => (
                     <div
                       key={item.id}
                       className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border gap-4 transition-all ${
@@ -536,7 +561,7 @@ export default function RestaurantDashboard({ restaurant }: RestaurantDetailsPro
                       }`}
                     >
                       <div className="flex items-center gap-3">
-                        <div className="relative w-14 h-14 rounded-xl overflow-hidden border border-slate-700 bg-slate-950 shrink-0">
+                        <div className="relative w-16 h-16 rounded-xl overflow-hidden border border-slate-700 bg-slate-950 shrink-0">
                           {item.imageUrl ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img
@@ -596,10 +621,10 @@ export default function RestaurantDashboard({ restaurant }: RestaurantDetailsPro
 
                         <button
                           onClick={() => openEditModal(item)}
-                          className="p-1.5 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg text-xs flex items-center gap-1 transition-colors"
-                          title="ویرایش عکس و قیمت"
+                          className="px-2.5 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg text-xs flex items-center gap-1 transition-colors border border-slate-600"
+                          title="ویرایش عکس، نام و قیمت"
                         >
-                          <Edit3 className="w-4 h-4 text-amber-400" />
+                          <Edit3 className="w-3.5 h-3.5 text-amber-400" />
                           ویرایش
                         </button>
 
@@ -617,91 +642,60 @@ export default function RestaurantDashboard({ restaurant }: RestaurantDetailsPro
             </div>
           </div>
 
-          {/* Add New Item Form with Image Upload & Presets (Col 1) */}
+          {/* Add New Item Form with Prominent Image Upload & Presets (Col 1) */}
           <div className="space-y-6">
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
-              <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-1.5">
-                <PlusCircle className="w-4 h-4 text-rose-500" />
-                افزودن آیتم جدید با تصویر
+            <div className="bg-slate-900 border-2 border-slate-700/80 rounded-2xl p-6 shadow-2xl">
+              <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2 border-b border-slate-800 pb-3">
+                <PlusCircle className="w-5 h-5 text-rose-500" />
+                افزودن آیتم جدید به این دسته‌بندی
               </h3>
 
               <form onSubmit={handleAddItem} className="space-y-4">
-                <div>
-                  <label className="block text-xs text-slate-400 mb-1">نام محصول:</label>
-                  <input
-                    type="text"
-                    required
-                    value={newItemTitle}
-                    onChange={(e) => setNewItemTitle(e.target.value)}
-                    placeholder="مثلاً: وافل نوتلا و موز"
-                    className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-rose-500"
-                  />
-                </div>
+                {/* PROMINENT IMAGE UPLOAD & PRESET SECTION */}
+                <div className="bg-slate-950 p-4 rounded-xl border border-slate-800">
+                  <label className="block text-xs font-bold text-slate-200 mb-2 flex items-center gap-1.5">
+                    <Camera className="w-4 h-4 text-rose-400" />
+                    انتخاب یا آپلود عکس برای این آیتم:
+                  </label>
 
-                <div>
-                  <label className="block text-xs text-slate-400 mb-1">قیمت (تومان):</label>
-                  <input
-                    type="number"
-                    required
-                    value={newItemPrice}
-                    onChange={(e) => setNewItemPrice(e.target.value)}
-                    placeholder="مثلاً: 145000"
-                    className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-rose-500 font-mono"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs text-slate-400 mb-1">توضیحات و مواد تشکیل‌دهنده:</label>
-                  <textarea
-                    rows={2}
-                    value={newItemDesc}
-                    onChange={(e) => setNewItemDesc(e.target.value)}
-                    placeholder="مثلاً: نان وافل بلژیکی تازه، شکلات نوتلا، موز و توت‌فرنگی"
-                    className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-rose-500 resize-none"
-                  ></textarea>
-                </div>
-
-                {/* Image Selection & Upload */}
-                <div>
-                  <label className="block text-xs text-slate-400 mb-1.5">تصویر محصول:</label>
-
-                  {/* Current Selected Image Preview */}
-                  <div className="relative w-full h-32 rounded-xl overflow-hidden border border-slate-700 mb-3 bg-slate-950">
+                  {/* Active Selected Image Preview */}
+                  <div className="relative w-full h-36 rounded-xl overflow-hidden border-2 border-slate-700 mb-3 bg-slate-900 shadow-inner">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={newItemImage}
-                      alt="پیش‌نمایش تصویر"
+                      alt="پیش‌نمایش تصویر محصول"
                       className="w-full h-full object-cover"
                     />
-                    <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur-md px-2 py-0.5 rounded text-[10px] text-white">
-                      پیش‌نمایش فعال
+                    <div className="absolute bottom-2 right-2 bg-black/75 backdrop-blur-md px-2.5 py-1 rounded-md text-[11px] text-white flex items-center gap-1">
+                      <Check className="w-3 h-3 text-emerald-400" />
+                      تصویر آماده ثبت
                     </div>
                   </div>
 
-                  {/* Upload file from computer */}
-                  <label className="w-full bg-slate-800 hover:bg-slate-700 border border-dashed border-slate-600 rounded-xl p-2.5 text-xs text-slate-300 flex items-center justify-center gap-2 cursor-pointer transition-colors mb-3">
+                  {/* Upload from computer/phone button */}
+                  <label className="w-full bg-slate-800 hover:bg-slate-700 border-2 border-dashed border-rose-500/50 hover:border-rose-400 rounded-xl p-3 text-xs text-white font-semibold flex items-center justify-center gap-2 cursor-pointer transition-all mb-3 shadow-md">
                     <Upload className="w-4 h-4 text-rose-400" />
-                    <span>{isUploading ? "در حال آپلود..." : "آپلود عکس از کامپیوتر یا گوشی"}</span>
+                    <span>{isUploading ? "در حال آپلود تصویر..." : "📁 آپلود عکس دلخواه از گوشی یا فایل سیستم"}</span>
                     <input
                       type="file"
                       accept="image/*"
                       className="hidden"
-                      onChange={(e) => handleFileUpload(e, "new")}
+                      onChange={(e) => handleFileUpload(e, "new_item")}
                     />
                   </label>
 
-                  {/* Quick Preset Images */}
-                  <div className="text-[11px] text-slate-400 mb-1.5">یا انتخاب از تصاویر آماده:</div>
+                  {/* Quick Preset Images Grid */}
+                  <div className="text-[11px] text-slate-400 mb-1.5">یا انتخاب سریع از عکس‌های پیشنهادی:</div>
                   <div className="grid grid-cols-3 gap-2">
                     {PRESET_IMAGES.map((preset, idx) => (
                       <button
                         key={idx}
                         type="button"
                         onClick={() => setNewItemImage(preset.url)}
-                        className={`rounded-lg overflow-hidden border relative h-12 transition-all ${
+                        className={`rounded-lg overflow-hidden border-2 relative h-12 transition-all ${
                           newItemImage === preset.url
-                            ? "border-rose-500 ring-2 ring-rose-500/40"
-                            : "border-slate-700 opacity-60 hover:opacity-100"
+                            ? "border-rose-500 ring-2 ring-rose-500/50 scale-105"
+                            : "border-slate-800 opacity-60 hover:opacity-100"
                         }`}
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -715,12 +709,47 @@ export default function RestaurantDashboard({ restaurant }: RestaurantDetailsPro
                   </div>
                 </div>
 
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">عنوان آیتم (مثلاً چیزکیک پسته):</label>
+                  <input
+                    type="text"
+                    required
+                    value={newItemTitle}
+                    onChange={(e) => setNewItemTitle(e.target.value)}
+                    placeholder="عنوان آیتم (مثلاً چیزکیک پسته)"
+                    className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-rose-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">قیمت به تومان (مثلاً 120000):</label>
+                  <input
+                    type="number"
+                    required
+                    value={newItemPrice}
+                    onChange={(e) => setNewItemPrice(e.target.value)}
+                    placeholder="قیمت به تومان (مثلاً 120000)"
+                    className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-rose-500 font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">توضیحات کوتاه یا مواد تشکیل‌دهنده (اختیاری):</label>
+                  <textarea
+                    rows={2}
+                    value={newItemDesc}
+                    onChange={(e) => setNewItemDesc(e.target.value)}
+                    placeholder="توضیحات کوتاه یا مواد تشکیل‌دهنده (اختیاری)"
+                    className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-rose-500 resize-none"
+                  ></textarea>
+                </div>
+
                 <button
                   type="submit"
                   disabled={isAddingItem || isUploading}
-                  className="w-full bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold py-2.5 rounded-xl transition-all shadow-lg shadow-rose-600/30 disabled:opacity-50"
+                  className="w-full bg-rose-600 hover:bg-rose-500 text-white text-xs sm:text-sm font-bold py-3 rounded-xl transition-all shadow-lg shadow-rose-600/30 disabled:opacity-50"
                 >
-                  {isAddingItem ? "در حال ذخیره‌سازی..." : "ثبت آیتم در منوی آنلاین"}
+                  {isAddingItem ? "در حال ثبت آیتم..." : "ثبت آیتم در منوی آنلاین"}
                 </button>
               </form>
             </div>
@@ -728,17 +757,17 @@ export default function RestaurantDashboard({ restaurant }: RestaurantDetailsPro
         </div>
       )}
 
-      {/* TAB 2: Cafe Customization & Branding */}
+      {/* TAB 2: Cafe Customization & Branding (Name, Address, Logo, Theme Color) */}
       {activeTab === "customization" && (
-        <div className="max-w-3xl mx-auto bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-xl">
-          <div className="flex items-center justify-between mb-6">
+        <div className="max-w-3xl mx-auto bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-2xl">
+          <div className="flex items-center justify-between mb-6 border-b border-slate-800 pb-4">
             <div>
               <h2 className="text-lg font-bold text-white flex items-center gap-2">
                 <Palette className="w-5 h-5 text-rose-500" />
-                شخصی‌سازی هویت بصری و اطلاعات کافه
+                شخصی‌سازی هویت بصری و مشخصات کافه
               </h2>
               <p className="text-xs text-slate-400 mt-1">
-                تغییرات شما در لحظه روی منوی اسکن شده توسط مشتریان اعمال خواهد شد.
+                تغییر نام کافه، آدرس، لوگو، رنگ تم و رمز وای‌فای (اعمال لحظه‌ای در دیتابیس ابری)
               </p>
             </div>
 
@@ -751,6 +780,35 @@ export default function RestaurantDashboard({ restaurant }: RestaurantDetailsPro
           </div>
 
           <form onSubmit={handleSaveSettings} className="space-y-6 text-sm">
+            {/* Cafe Logo Upload Section */}
+            <div className="bg-slate-950 p-5 rounded-2xl border border-slate-800 flex flex-col sm:flex-row items-center gap-5">
+              <div className="w-20 h-20 rounded-2xl overflow-hidden border-2 border-slate-700 bg-slate-900 flex items-center justify-center shrink-0 shadow-lg">
+                {cafeLogo ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={cafeLogo} alt="لوگوی کافه" className="w-full h-full object-cover" />
+                ) : (
+                  <Store className="w-8 h-8 text-slate-600" />
+                )}
+              </div>
+
+              <div className="flex-1 text-center sm:text-right">
+                <h4 className="font-bold text-white text-xs mb-1">لوگوی اختصاصی کافه</h4>
+                <p className="text-[11px] text-slate-400 mb-3">
+                  لوگوی شما در بالای منوی آنلاین مشتری و در مرکز کیو‌آرکد میزها قرار می‌گیرد.
+                </p>
+                <label className="inline-flex items-center gap-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 px-4 py-2 rounded-xl text-xs font-semibold cursor-pointer transition-colors">
+                  <Upload className="w-3.5 h-3.5 text-rose-400" />
+                  <span>{isUploadingLogo ? "در حال آپلود لوگو..." : "آپلود لوگوی کافه (تصویر مربع)"}</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => handleFileUpload(e, "logo")}
+                  />
+                </label>
+              </div>
+            </div>
+
             {/* Color Palette Selector */}
             <div>
               <label className="block text-xs font-bold text-slate-300 mb-2">رنگ سازمانی و تم منو:</label>
@@ -802,14 +860,14 @@ export default function RestaurantDashboard({ restaurant }: RestaurantDetailsPro
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">متن خوش‌آمدگویی یا بایو کافه:</label>
-              <textarea
-                rows={2}
-                value={cafeDesc}
-                onChange={(e) => setCafeDesc(e.target.value)}
-                placeholder="توضیحی درباره اتمسفر کافه، سبک قهوه یا سابقه..."
-                className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-rose-500 resize-none"
-              ></textarea>
+              <label className="block text-xs font-semibold text-slate-300 mb-1.5">آدرس دقیق کافه (جهت نمایش روی منو):</label>
+              <input
+                type="text"
+                value={cafeAddress}
+                onChange={(e) => setCafeAddress(e.target.value)}
+                placeholder="تهران، خیابان ولیعصر..."
+                className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-rose-500"
+              />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -825,7 +883,7 @@ export default function RestaurantDashboard({ restaurant }: RestaurantDetailsPro
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">رمز وای‌فای کافه (جهت نمایش روی منو):</label>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">رمز وای‌فای کافه (جهت کپی سریع توسط مشتری):</label>
                 <input
                   type="text"
                   value={cafeWifi}
@@ -837,23 +895,23 @@ export default function RestaurantDashboard({ restaurant }: RestaurantDetailsPro
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">آدرس دقیق کافه:</label>
-              <input
-                type="text"
-                value={cafeAddress}
-                onChange={(e) => setCafeAddress(e.target.value)}
-                placeholder="تهران، خیابان ولیعصر..."
-                className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-rose-500"
-              />
+              <label className="block text-xs font-semibold text-slate-300 mb-1.5">متن خوش‌آمدگویی یا بایو کافه:</label>
+              <textarea
+                rows={2}
+                value={cafeDesc}
+                onChange={(e) => setCafeDesc(e.target.value)}
+                placeholder="توضیحی درباره اتمسفر کافه، سبک قهوه یا سابقه..."
+                className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-rose-500 resize-none"
+              ></textarea>
             </div>
 
             <button
               type="submit"
               disabled={isSavingSettings}
-              className="w-full bg-rose-600 hover:bg-rose-500 text-white font-bold py-3 rounded-xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-rose-600/30 transition-all disabled:opacity-50"
+              className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3.5 rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/30 transition-all disabled:opacity-50"
             >
               <Save className="w-4 h-4" />
-              {isSavingSettings ? "در حال ذخیره‌سازی در دیتابیس..." : "ذخیره تغییرات و به‌روزرسانی منو"}
+              {isSavingSettings ? "در حال ذخیره‌سازی در دیتابیس ابری..." : "ذخیره تغییرات کافه در دیتابیس ابری"}
             </button>
           </form>
         </div>
@@ -1004,7 +1062,7 @@ export default function RestaurantDashboard({ restaurant }: RestaurantDetailsPro
                     type="file"
                     accept="image/*"
                     className="hidden"
-                    onChange={(e) => handleFileUpload(e, "edit")}
+                    onChange={(e) => handleFileUpload(e, "edit_item")}
                   />
                 </label>
 
