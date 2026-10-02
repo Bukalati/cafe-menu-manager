@@ -438,53 +438,53 @@ export default function RestaurantDashboard({ restaurant }: RestaurantDetailsPro
       </div>
 
       {/* Main Tabs Navigation Bar */}
-      <div className="max-w-7xl mx-auto mb-8 bg-slate-900/90 border border-slate-800 p-2 rounded-2xl shadow-lg flex flex-wrap items-center gap-2">
+      <div className="max-w-7xl mx-auto mb-8 bg-slate-900/90 border border-slate-800 p-2 rounded-2xl shadow-lg grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 items-stretch">
         <button
           onClick={() => setActiveTab("menu")}
-          className={`flex-1 min-w-[200px] py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 ${
+          className={`h-full min-h-[56px] py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center text-center gap-2 ${
             activeTab === "menu"
               ? "bg-rose-600 text-white shadow-lg shadow-rose-600/30"
               : "bg-slate-950/60 text-slate-400 hover:text-white"
           }`}
         >
-          <Layers className="w-4 h-4 text-amber-400" />
-          ۱. مدیریت منو، آپلود عکس و قیمت‌ها
+          <Layers className="w-4 h-4 text-amber-400 shrink-0" />
+          <span>۱. مدیریت منو و قیمت‌ها</span>
         </button>
 
         <button
           onClick={() => setActiveTab("customization")}
-          className={`flex-1 min-w-[200px] py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 ${
+          className={`h-full min-h-[56px] py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center text-center gap-2 ${
             activeTab === "customization"
               ? "bg-rose-600 text-white shadow-lg shadow-rose-600/30"
               : "bg-slate-950/60 text-slate-400 hover:text-white"
           }`}
         >
-          <Palette className="w-4 h-4 text-sky-400" />
-          ۲. ویرایش اطلاعات کافه (اسم، آدرس، لوگو و تم)
+          <Palette className="w-4 h-4 text-sky-400 shrink-0" />
+          <span>۲. ویرایش اطلاعات و تم کافه</span>
         </button>
 
         <button
           onClick={() => setActiveTab("qr")}
-          className={`flex-1 min-w-[160px] py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 ${
+          className={`h-full min-h-[56px] py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center text-center gap-2 ${
             activeTab === "qr"
               ? "bg-rose-600 text-white shadow-lg shadow-rose-600/30"
               : "bg-slate-950/60 text-slate-400 hover:text-white"
           }`}
         >
-          <QrCode className="w-4 h-4 text-emerald-400" />
-          ۳. استودیو و دانلود QR Code
+          <QrCode className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span>۳. استودیو و دانلود QR Code</span>
         </button>
 
         <button
           onClick={() => setActiveTab("subscription")}
-          className={`flex-1 min-w-[160px] py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 ${
+          className={`h-full min-h-[56px] py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center text-center gap-2 ${
             activeTab === "subscription"
               ? "bg-rose-600 text-white shadow-lg shadow-rose-600/30"
               : "bg-slate-950/60 text-slate-400 hover:text-white"
           }`}
         >
-          <Calendar className="w-4 h-4 text-purple-400" />
-          ۴. اشتراک و فاکتور
+          <Calendar className="w-4 h-4 text-purple-400 shrink-0" />
+          <span>۴. اشتراک و فاکتور</span>
         </button>
       </div>
 

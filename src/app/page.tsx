@@ -75,13 +75,6 @@ export default async function HomePage() {
             >
               ثبت‌نام کافه جدید
             </Link>
-            <Link
-              href="/admin"
-              className="bg-indigo-600/25 hover:bg-indigo-600/40 text-indigo-300 border border-indigo-500/40 px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all hidden sm:flex"
-            >
-              <ShieldCheck className="w-4 h-4 text-amber-400" />
-              پنل نظارت دانشگاه
-            </Link>
           </div>
         </div>
       </nav>

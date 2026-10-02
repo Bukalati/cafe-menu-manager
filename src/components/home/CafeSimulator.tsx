@@ -12,7 +12,6 @@ import {
   QrCode,
   Wifi,
   ExternalLink,
-  Eye,
   Sliders,
 } from "lucide-react";
 
@@ -29,7 +28,6 @@ export default function CafeSimulator() {
   const [color, setColor] = useState("#e11d48");
   const [activeItemAvailable, setActiveItemAvailable] = useState(true);
   const [samplePrice, setSamplePrice] = useState("85000");
-  const [showFullDemoModal, setShowFullDemoModal] = useState(false);
 
   return (
     <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 sm:p-10 shadow-2xl relative overflow-hidden backdrop-blur-xl">
@@ -119,19 +117,10 @@ export default function CafeSimulator() {
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-3 pt-2">
-            <button
-              type="button"
-              onClick={() => setShowFullDemoModal(true)}
-              className="flex-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white font-bold py-3.5 rounded-2xl text-xs flex items-center justify-center gap-2 transition-all shadow-md"
-            >
-              <Eye className="w-4 h-4 text-sky-400" />
-              مشاهده تمام‌صفحه پیش‌نمایش تستی
-            </button>
-
+          <div className="pt-2">
             <Link
               href="/login?tab=register"
-              className="flex-1 bg-gradient-to-r from-rose-600 to-amber-500 hover:from-rose-500 hover:to-amber-400 text-white font-extrabold py-3.5 rounded-2xl text-xs flex items-center justify-center gap-2 transition-all shadow-xl shadow-rose-600/25"
+              className="w-full bg-gradient-to-r from-rose-600 to-amber-500 hover:from-rose-500 hover:to-amber-400 text-white font-extrabold py-3.5 rounded-2xl text-xs sm:text-sm flex items-center justify-center gap-2 transition-all shadow-xl shadow-rose-600/25"
             >
               ثبت‌نام رسمی و دریافت منوی کافه
               <ArrowLeft className="w-4 h-4" />
@@ -228,42 +217,6 @@ export default function CafeSimulator() {
         </div>
       </div>
 
-      {/* Full Demo Preview Modal */}
-      {showFullDemoModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-700 rounded-3xl max-w-sm w-full p-6 text-center shadow-2xl relative">
-            <button
-              onClick={() => setShowFullDemoModal(false)}
-              className="absolute left-4 top-4 text-slate-400 hover:text-white text-xs bg-slate-800 px-2 py-1 rounded-lg"
-            >
-              بستن ✕
-            </button>
-
-            <div
-              className="p-6 rounded-2xl mb-4 text-white"
-              style={{ background: `linear-gradient(180deg, ${color} 0%, #0f172a 100%)` }}
-            >
-              <div className="w-14 h-14 mx-auto rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center mb-3">
-                <Coffee className="w-7 h-7" />
-              </div>
-              <h3 className="font-black text-lg">{name}</h3>
-              <p className="text-xs text-white/80 mt-1">منوی دیجیتال تستی و شبیه‌سازی شده</p>
-            </div>
-
-            <p className="text-xs text-slate-400 mb-6">
-              برای ساخت منوی واقعی کافه خود، ایجاد بارکد QR با لوگوی اختصاصی و مدیریت قیمت‌ها ثبت‌نام کنید.
-            </p>
-
-            <Link
-              href="/login?tab=register"
-              className="w-full bg-rose-600 hover:bg-rose-500 text-white font-bold py-3 rounded-xl text-xs flex items-center justify-center gap-2 transition-all shadow-lg shadow-rose-600/30"
-            >
-              ثبت‌نام رسمی و دریافت اشتراک
-              <ArrowLeft className="w-4 h-4" />
-            </Link>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
