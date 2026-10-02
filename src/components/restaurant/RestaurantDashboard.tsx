@@ -30,6 +30,7 @@ import {
   Sliders,
 } from "lucide-react";
 import { formatToman, formatPersianNumber, formatPersianDate } from "@/lib/utils";
+import { THEME_PRESETS, getTheme } from "@/lib/themes";
 
 interface MenuItemData {
   id: string;
@@ -130,6 +131,8 @@ export default function RestaurantDashboard({ restaurant }: RestaurantDetailsPro
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [settingsSavedSuccess, setSettingsSavedSuccess] = useState(false);
+
+  const activeTheme = getTheme(cafeColor);
 
   const qrRef = useRef<SVGSVGElement>(null);
 
@@ -396,7 +399,7 @@ export default function RestaurantDashboard({ restaurant }: RestaurantDetailsPro
           </Link>
           <div
             className="w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-lg font-bold overflow-hidden"
-            style={{ backgroundColor: cafeColor }}
+            style={{ backgroundColor: activeTheme.accentColor }}
           >
             {cafeLogo ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -809,28 +812,83 @@ export default function RestaurantDashboard({ restaurant }: RestaurantDetailsPro
               </div>
             </div>
 
-            {/* Color Palette Selector */}
+            {/* Theme Presets Selection Studio */}
             <div>
-              <label className="block text-xs font-bold text-slate-300 mb-2">رنگ سازمانی و تم منو:</label>
-              <div className="grid grid-cols-2 sm:grid-cols-6 gap-3">
-                {THEME_PALETTES.map((theme, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => setCafeColor(theme.color)}
-                    className={`p-2.5 rounded-xl border flex flex-col items-center gap-2 transition-all ${
-                      cafeColor === theme.color
-                        ? "border-white bg-slate-800 ring-2 ring-rose-500/50"
-                        : "border-slate-800 bg-slate-950 hover:border-slate-700"
-                    }`}
-                  >
-                    <span
-                      className="w-6 h-6 rounded-full shadow-md"
-                      style={{ backgroundColor: theme.color }}
-                    ></span>
-                    <span className="text-[11px] text-slate-300 font-medium">{theme.name}</span>
-                  </button>
-                ))}
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                  <Sparkles className="w-4 h-4 text-amber-400" />
+                  قالب‌های بصری و تم‌های آماده منو (تغییر با ۱ کلیک):
+                </label>
+                <span className="text-[11px] text-slate-400">
+                  تم فعال: <strong className="text-rose-400 font-bold">{activeTheme.name}</strong>
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                {THEME_PRESETS.map((preset) => {
+                  const isSelected = cafeColor === preset.id || cafeColor === preset.accentColor;
+                  return (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      onClick={() => setCafeColor(preset.id)}
+                      className={`p-3.5 rounded-2xl border text-right transition-all flex items-start justify-between gap-3 ${
+                        isSelected
+                          ? "border-rose-500 bg-slate-800/90 ring-2 ring-rose-500/40 shadow-lg"
+                          : "border-slate-800 bg-slate-950 hover:border-slate-700"
+                      }`}
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-xs text-white">{preset.name}</span>
+                          {isSelected && (
+                            <span className="text-[9px] bg-rose-500 text-white px-2 py-0.5 rounded-full font-bold">
+                              فعال
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-slate-400 mt-1 line-clamp-1">
+                          {preset.subtitle}
+                        </p>
+                      </div>
+
+                      {/* Swatch color dots */}
+                      <div className="flex items-center gap-1 shrink-0 p-1.5 rounded-xl bg-slate-900 border border-slate-800">
+                        {preset.swatchColors.map((color, i) => (
+                          <span
+                            key={i}
+                            className="w-3 h-3 rounded-full shadow"
+                            style={{ backgroundColor: color }}
+                          ></span>
+                        ))}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Live Theme Preview Box */}
+              <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800">
+                <div className="text-[11px] text-slate-400 mb-2 flex items-center justify-between">
+                  <span>پیش‌نمایش زنده کارت آیتم در منوی مشتری:</span>
+                  <span className="text-[10px] text-emerald-400 font-medium">✓ همگام با تم انتخابی ({activeTheme.name})</span>
+                </div>
+                <div className={`p-4 rounded-xl border ${activeTheme.cardBgClass} transition-all`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: activeTheme.accentColor }}></span>
+                      <span className={`font-black text-xs ${activeTheme.textPrimary}`}>کافه لاته با آرت باریستا</span>
+                    </div>
+                    <span className={`text-xs ${activeTheme.priceClass}`}>۹۵٬۰۰۰ تومان</span>
+                  </div>
+                  <p className={`text-[11px] ${activeTheme.textSecondary} mt-1.5`}>
+                    اسپرسو دوپیو ۱۰۰٪ عربیکا با شیر فوم‌گرفته مخملی
+                  </p>
+                  <div className="mt-3 pt-2 border-t border-white/10 flex items-center justify-between text-[10px]">
+                    <span className={activeTheme.badgeClass + " px-2 py-0.5 rounded font-medium"}>موجود در منو</span>
+                    <span className={activeTheme.trayButtonBg + " px-2.5 py-1 rounded-lg font-bold"}>+ افزودن به سینی</span>
+                  </div>
+                </div>
               </div>
             </div>
 
