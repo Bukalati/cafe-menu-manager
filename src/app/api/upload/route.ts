@@ -1,7 +1,5 @@
 // src/app/api/upload/route.ts
 import { NextResponse } from "next/server";
-import { writeFile } from "fs/promises";
-import path from "path";
 
 export async function POST(req: Request) {
   try {
@@ -14,19 +12,12 @@ export async function POST(req: Request) {
 
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
+    const mimeType = file.type || "image/jpeg";
+    const base64Url = `data:${mimeType};base64,${buffer.toString("base64")}`;
 
-    // Clean file extension
-    const ext = file.name.split(".").pop() || "jpg";
-    const filename = `img_${Date.now()}_${Math.floor(Math.random() * 10000)}.${ext}`;
-    const uploadDir = path.join(process.cwd(), "public", "uploads");
-    const filepath = path.join(uploadDir, filename);
-
-    await writeFile(filepath, buffer);
-
-    const publicUrl = `/uploads/${filename}`;
-    return NextResponse.json({ url: publicUrl });
+    return NextResponse.json({ url: base64Url });
   } catch (error) {
     console.error("Upload error:", error);
-    return NextResponse.json({ error: "خطا در ذخیره‌سازی تصویر" }, { status: 500 });
+    return NextResponse.json({ error: "خطا در پردازش تصویر" }, { status: 500 });
   }
 }
