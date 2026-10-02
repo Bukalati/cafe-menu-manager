@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { formatToman, formatPersianNumber } from "@/lib/utils";
-import { getTheme } from "@/lib/themes";
+import { getTheme, parseThemeConfig, getPatternStyle } from "@/lib/themes";
 
 interface MenuItem {
   id: string;
@@ -71,8 +71,10 @@ export default function CustomerMenu({ restaurant }: CustomerMenuProps) {
   // Selected item modal for full preview
   const [selectedItemForModal, setSelectedItemForModal] = useState<MenuItem | null>(null);
 
-  // Active theme from preset or hex
-  const theme = getTheme(restaurant.themeColor);
+  // Active theme and pattern from parsed config
+  const parsedTheme = parseThemeConfig(restaurant.themeColor);
+  const theme = parsedTheme.theme;
+  const patternStyle = getPatternStyle(parsedTheme.pattern, theme.isDark);
 
   const allCategories = restaurant.categories || [];
   const allItems = allCategories.flatMap((cat) => cat.items);
@@ -145,16 +147,42 @@ export default function CustomerMenu({ restaurant }: CustomerMenuProps) {
   };
 
   return (
-    <div className={`min-h-screen ${theme.bodyBgClass} font-sans pb-28 selection:bg-rose-500 selection:text-white transition-colors duration-300`}>
+    <div className={`min-h-screen ${theme.bodyBgClass} font-sans pb-28 selection:bg-rose-500 selection:text-white transition-colors duration-300 relative`}>
+      {/* Background Pattern Layer */}
+      {parsedTheme.pattern !== "none" && (
+        <div
+          className="fixed inset-0 pointer-events-none z-0 opacity-80"
+          style={patternStyle}
+        />
+      )}
+
       {/* Top Cafe Header Banner */}
       <div
         className="relative pt-12 pb-8 px-4 text-center shadow-2xl overflow-hidden transition-all duration-300"
         style={{
-          background: restaurant.coverUrl
-            ? `linear-gradient(180deg, rgba(15,23,42,0.7) 0%, rgba(15,23,42,0.95) 100%), url(${restaurant.coverUrl}) center/cover no-repeat`
-            : theme.headerGradient,
+          background: theme.headerGradient,
         }}
       >
+        {/* Background Cafe Banner image behind the gradient */}
+        {restaurant.coverUrl && (
+          <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={restaurant.coverUrl}
+              alt="بنر کافه"
+              className="w-full h-full object-cover object-center scale-105"
+            />
+            {/* Gradient Overlay to preserve theme atmosphere & 100% text readability */}
+            <div
+              className="absolute inset-0"
+              style={{
+                background: theme.isDark
+                  ? "linear-gradient(180deg, rgba(8,13,22,0.65) 0%, rgba(8,13,22,0.92) 100%)"
+                  : "linear-gradient(180deg, rgba(42,24,16,0.65) 0%, rgba(250,245,238,0.94) 100%)",
+              }}
+            />
+          </div>
+        )}
         <div className="max-w-md mx-auto relative z-10">
           {/* Cafe Logo */}
           <div className="w-20 h-20 mx-auto mb-3 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-xl overflow-hidden ring-4 ring-white/10">

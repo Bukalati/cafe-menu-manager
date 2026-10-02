@@ -30,7 +30,15 @@ import {
   Sliders,
 } from "lucide-react";
 import { formatToman, formatPersianNumber, formatPersianDate } from "@/lib/utils";
-import { THEME_PRESETS, getTheme } from "@/lib/themes";
+import {
+  THEME_PRESETS,
+  getTheme,
+  parseThemeConfig,
+  encodeThemeConfig,
+  PATTERN_OPTIONS,
+  CUSTOM_ACCENT_COLORS,
+  PRESET_CAFE_BANNERS,
+} from "@/lib/themes";
 
 interface MenuItemData {
   id: string;
@@ -121,19 +129,28 @@ export default function RestaurantDashboard({ restaurant }: RestaurantDetailsPro
   const [isSavingEdit, setIsSavingEdit] = useState(false);
 
   // Cafe Profile & Customization State
+  const initialThemeConfig = parseThemeConfig(restaurant.themeColor);
+  const [selectedThemeId, setSelectedThemeId] = useState(initialThemeConfig.themeId);
+  const [selectedPattern, setSelectedPattern] = useState(initialThemeConfig.pattern);
+  const [customAccent, setCustomAccent] = useState(initialThemeConfig.accentColor);
   const [cafeName, setCafeName] = useState(restaurant.name);
   const [cafeDesc, setCafeDesc] = useState(restaurant.description || "");
   const [cafePhone, setCafePhone] = useState(restaurant.phone || "");
   const [cafeAddress, setCafeAddress] = useState(restaurant.address || "");
   const [cafeInstagram, setCafeInstagram] = useState(restaurant.instagram || "");
   const [cafeWifi, setCafeWifi] = useState(restaurant.wifiPassword || "");
-  const [cafeColor, setCafeColor] = useState(restaurant.themeColor || "#e11d48");
   const [cafeLogo, setCafeLogo] = useState(restaurant.logoUrl || "");
+  const [cafeCover, setCafeCover] = useState(restaurant.coverUrl || "");
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+  const [isUploadingCover, setIsUploadingCover] = useState(false);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [settingsSavedSuccess, setSettingsSavedSuccess] = useState(false);
 
-  const activeTheme = getTheme(cafeColor);
+  const baseTheme = getTheme(selectedThemeId);
+  const activeTheme = {
+    ...baseTheme,
+    accentColor: customAccent || baseTheme.accentColor,
+  };
 
   const qrRef = useRef<SVGSVGElement>(null);
 
@@ -146,12 +163,16 @@ export default function RestaurantDashboard({ restaurant }: RestaurantDetailsPro
     ? `${window.location.origin}/menu/${restaurant.slug}`
     : `/menu/${restaurant.slug}`;
 
-  // Handle Image File Upload (Item or Logo)
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, target: "new_item" | "edit_item" | "logo") => {
+  // Handle Image File Upload (Item, Logo, or Cover Banner)
+  const handleFileUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    target: "new_item" | "edit_item" | "logo" | "cover"
+  ) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     if (target === "logo") setIsUploadingLogo(true);
+    else if (target === "cover") setIsUploadingCover(true);
     else setIsUploading(true);
 
     const formData = new FormData();
@@ -167,12 +188,14 @@ export default function RestaurantDashboard({ restaurant }: RestaurantDetailsPro
         if (target === "new_item") setNewItemImage(data.url);
         if (target === "edit_item") setEditImage(data.url);
         if (target === "logo") setCafeLogo(data.url);
+        if (target === "cover") setCafeCover(data.url);
       }
     } catch {
       alert("خطا در بارگذاری تصویر");
     } finally {
       setIsUploading(false);
       setIsUploadingLogo(false);
+      setIsUploadingCover(false);
     }
   };
 
@@ -342,6 +365,8 @@ export default function RestaurantDashboard({ restaurant }: RestaurantDetailsPro
     setIsSavingSettings(true);
     setSettingsSavedSuccess(false);
 
+    const encodedTheme = encodeThemeConfig(selectedThemeId, selectedPattern, customAccent);
+
     try {
       const res = await fetch(`/api/restaurant/settings`, {
         method: "POST",
@@ -354,14 +379,15 @@ export default function RestaurantDashboard({ restaurant }: RestaurantDetailsPro
           address: cafeAddress,
           instagram: cafeInstagram,
           wifiPassword: cafeWifi,
-          themeColor: cafeColor,
+          themeColor: encodedTheme,
           logoUrl: cafeLogo,
+          coverUrl: cafeCover,
         }),
       });
 
       if (res.ok) {
         setSettingsSavedSuccess(true);
-        alert("✅ مشخصات و هویت بصری کافه با موفقیت در دیتابیس ابری ذخیره شد!");
+        alert("✅ مشخصات، بنر و تنظیمات بصری کافه با موفقیت در دیتابیس ابری ذخیره شد!");
         setTimeout(() => setSettingsSavedSuccess(false), 3000);
       }
     } catch {
@@ -390,63 +416,73 @@ export default function RestaurantDashboard({ restaurant }: RestaurantDetailsPro
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-4 md:p-8 font-sans selection:bg-rose-500 selection:text-white">
       {/* Top Header */}
-      <div className="max-w-7xl mx-auto mb-8 flex flex-col md:flex-row items-center justify-between gap-4 bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
-        <div className="flex items-center gap-3">
-          <Link
-            href="/"
-            className="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
-            title="بازگشت به صفحه اصلی سایت"
-          >
-            <ArrowRight className="w-5 h-5" />
-          </Link>
-          <div
-            className="w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-lg font-bold overflow-hidden"
-            style={{ backgroundColor: activeTheme.accentColor }}
-          >
-            {cafeLogo ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={cafeLogo} alt="لوگوی کافه" className="w-full h-full object-cover" />
-            ) : (
-              <Store className="w-6 h-6" />
-            )}
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold text-white">{cafeName}</h1>
-              <span className="text-xs bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-medium">
-                پنل مدیریت اختصاصی
-              </span>
-            </div>
-            <p className="text-xs text-slate-400 flex items-center gap-1 mt-1">
-              <MapPin className="w-3.5 h-3.5 text-slate-500" />
-              {cafeAddress || "تهران"}
-              {cafeWifi && (
-                <span className="mr-3 flex items-center gap-1 text-slate-400">
-                  <Wifi className="w-3.5 h-3.5 text-rose-400" />
-                  وای‌فای: <code className="text-rose-300 font-mono">{cafeWifi}</code>
-                </span>
-              )}
-            </p>
-          </div>
-        </div>
+      <div className="max-w-7xl mx-auto mb-6 bg-slate-900 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0">
+            {/* Back Button */}
+            <Link
+              href="/"
+              className="p-2 sm:p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors shrink-0"
+              title="بازگشت به صفحه اصلی سایت"
+            >
+              <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
+            </Link>
 
-        <div className="flex items-center gap-2">
-          <Link
-            href={`/menu/${restaurant.slug}`}
-            target="_blank"
-            className="bg-rose-600 hover:bg-rose-500 text-white px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all shadow-lg shadow-rose-600/20"
-          >
-            <ExternalLink className="w-4 h-4" />
-            مشاهده زنده منوی مشتری
-          </Link>
+            {/* Cafe Logo */}
+            <div
+              className="w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-lg font-bold overflow-hidden shrink-0"
+              style={{ backgroundColor: activeTheme.accentColor }}
+            >
+              {cafeLogo ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={cafeLogo} alt="لوگوی کافه" className="w-full h-full object-cover" />
+              ) : (
+                <Store className="w-6 h-6 shrink-0" />
+              )}
+            </div>
+
+            {/* Title & Info */}
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-base sm:text-xl font-bold text-white truncate max-w-[180px] sm:max-w-md">{cafeName}</h1>
+                <span className="text-[10px] sm:text-xs bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-medium whitespace-nowrap shrink-0">
+                  پنل مدیریت اختصاصی
+                </span>
+              </div>
+              <div className="text-[11px] sm:text-xs text-slate-400 flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
+                <span className="flex items-center gap-1 shrink-0">
+                  <MapPin className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                  {cafeAddress || "تهران"}
+                </span>
+                {cafeWifi && (
+                  <span className="flex items-center gap-1 text-slate-400 shrink-0">
+                    <Wifi className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                    وای‌فای: <code className="text-rose-300 font-mono">{cafeWifi}</code>
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Action Button */}
+          <div className="w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-800/80 flex items-center shrink-0">
+            <Link
+              href={`/menu/${restaurant.slug}`}
+              target="_blank"
+              className="w-full sm:w-auto bg-rose-600 hover:bg-rose-500 text-white px-4 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-lg shadow-rose-600/20 whitespace-nowrap"
+            >
+              <ExternalLink className="w-4 h-4 shrink-0" />
+              <span>مشاهده زنده منوی مشتری</span>
+            </Link>
+          </div>
         </div>
       </div>
 
       {/* Main Tabs Navigation Bar */}
-      <div className="max-w-7xl mx-auto mb-8 bg-slate-900/90 border border-slate-800 p-2 rounded-2xl shadow-lg grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 items-stretch">
+      <div className="max-w-7xl mx-auto mb-6 sm:mb-8 bg-slate-900/90 border border-slate-800 p-1.5 sm:p-2 rounded-2xl shadow-lg grid grid-cols-2 lg:grid-cols-4 gap-1.5 sm:gap-2 items-stretch">
         <button
           onClick={() => setActiveTab("menu")}
-          className={`h-full min-h-[56px] py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center text-center gap-2 ${
+          className={`h-full min-h-[52px] sm:min-h-[56px] py-2.5 sm:py-3 px-2 sm:px-4 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center text-center gap-1.5 sm:gap-2 ${
             activeTab === "menu"
               ? "bg-rose-600 text-white shadow-lg shadow-rose-600/30"
               : "bg-slate-950/60 text-slate-400 hover:text-white"
@@ -458,7 +494,7 @@ export default function RestaurantDashboard({ restaurant }: RestaurantDetailsPro
 
         <button
           onClick={() => setActiveTab("customization")}
-          className={`h-full min-h-[56px] py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center text-center gap-2 ${
+          className={`h-full min-h-[52px] sm:min-h-[56px] py-2.5 sm:py-3 px-2 sm:px-4 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center text-center gap-1.5 sm:gap-2 ${
             activeTab === "customization"
               ? "bg-rose-600 text-white shadow-lg shadow-rose-600/30"
               : "bg-slate-950/60 text-slate-400 hover:text-white"
@@ -470,7 +506,7 @@ export default function RestaurantDashboard({ restaurant }: RestaurantDetailsPro
 
         <button
           onClick={() => setActiveTab("qr")}
-          className={`h-full min-h-[56px] py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center text-center gap-2 ${
+          className={`h-full min-h-[52px] sm:min-h-[56px] py-2.5 sm:py-3 px-2 sm:px-4 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center text-center gap-1.5 sm:gap-2 ${
             activeTab === "qr"
               ? "bg-rose-600 text-white shadow-lg shadow-rose-600/30"
               : "bg-slate-950/60 text-slate-400 hover:text-white"
@@ -482,7 +518,7 @@ export default function RestaurantDashboard({ restaurant }: RestaurantDetailsPro
 
         <button
           onClick={() => setActiveTab("subscription")}
-          className={`h-full min-h-[56px] py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center text-center gap-2 ${
+          className={`h-full min-h-[52px] sm:min-h-[56px] py-2.5 sm:py-3 px-2 sm:px-4 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center text-center gap-1.5 sm:gap-2 ${
             activeTab === "subscription"
               ? "bg-rose-600 text-white shadow-lg shadow-rose-600/30"
               : "bg-slate-950/60 text-slate-400 hover:text-white"
@@ -788,6 +824,96 @@ export default function RestaurantDashboard({ restaurant }: RestaurantDetailsPro
           </div>
 
           <form onSubmit={handleSaveSettings} className="space-y-6 text-sm">
+            {/* Cafe Cover Banner Section */}
+            <div className="bg-slate-950 p-5 rounded-2xl border border-slate-800">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                <div>
+                  <h4 className="font-bold text-white text-xs flex items-center gap-1.5">
+                    <ImageIcon className="w-4 h-4 text-amber-400" />
+                    بنر و عکس پس‌زمینه سربرگ کافه
+                  </h4>
+                  <p className="text-[11px] text-slate-400 mt-0.5">
+                    این تصویر در بالای منوی آنلاین مشتری و در پشت گرادیانت رنگی تم قرار می‌گیرد.
+                  </p>
+                </div>
+                {cafeCover && (
+                  <button
+                    type="button"
+                    onClick={() => setCafeCover("")}
+                    className="text-[11px] text-rose-400 hover:text-rose-300 flex items-center gap-1 self-start sm:self-auto bg-rose-500/10 px-2.5 py-1 rounded-lg border border-rose-500/20 transition-colors"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    حذف بنر
+                  </button>
+                )}
+              </div>
+
+              {/* Banner Live Preview Box */}
+              <div className="relative w-full h-32 sm:h-36 rounded-xl overflow-hidden border border-slate-700 mb-3 bg-slate-900 shadow-inner">
+                {cafeCover ? (
+                  <>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={cafeCover} alt="بنر کافه" className="w-full h-full object-cover" />
+                    <div
+                      className="absolute inset-0"
+                      style={{
+                        background: activeTheme.isDark
+                          ? "linear-gradient(180deg, rgba(8,13,22,0.55) 0%, rgba(8,13,22,0.92) 100%)"
+                          : "linear-gradient(180deg, rgba(42,24,16,0.55) 0%, rgba(250,245,238,0.92) 100%)",
+                      }}
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center text-white/90 font-bold text-xs pointer-events-none drop-shadow">
+                      ✓ پیش‌نمایش افکت پس‌زمینه سربرگ با عکس انتخابی شما
+                    </div>
+                  </>
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center text-slate-500 gap-1.5 p-4 text-center">
+                    <ImageIcon className="w-6 h-6 text-slate-600" />
+                    <span className="text-xs">در حال حاضر بنری آپلود نشده است (گرادیانت رنگی تم اعمال می‌شود).</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Action Buttons & Presets */}
+              <div className="space-y-3">
+                <label className="inline-flex items-center gap-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 px-4 py-2 rounded-xl text-xs font-semibold cursor-pointer transition-colors w-full sm:w-auto justify-center">
+                  <Upload className="w-3.5 h-3.5 text-amber-400" />
+                  <span>{isUploadingCover ? "در حال آپلود بنر..." : "آپلود بنر دلخواه از گالری یا سیستم"}</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => handleFileUpload(e, "cover")}
+                  />
+                </label>
+
+                {/* Preset Cafe Ambience Banners */}
+                <div>
+                  <span className="block text-[11px] text-slate-400 mb-1.5 font-medium">یا انتخاب سریع از بنرهای عکاسی فضای کافه:</span>
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                    {PRESET_CAFE_BANNERS.map((banner, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => setCafeCover(banner.url)}
+                        className={`group relative h-16 rounded-xl overflow-hidden border text-right transition-all ${
+                          cafeCover === banner.url
+                            ? "border-amber-500 ring-2 ring-amber-500/50"
+                            : "border-slate-800 opacity-75 hover:opacity-100"
+                        }`}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={banner.url} alt={banner.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent flex items-end p-1.5">
+                          <span className="text-[10px] text-white font-bold leading-tight line-clamp-1">{banner.name}</span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* Cafe Logo Upload Section */}
             <div className="bg-slate-950 p-5 rounded-2xl border border-slate-800 flex flex-col sm:flex-row items-center gap-5">
               <div className="w-20 h-20 rounded-2xl overflow-hidden border-2 border-slate-700 bg-slate-900 flex items-center justify-center shrink-0 shadow-lg">
@@ -817,26 +943,29 @@ export default function RestaurantDashboard({ restaurant }: RestaurantDetailsPro
               </div>
             </div>
 
-            {/* Theme Presets Selection Studio */}
+            {/* 1. Theme Presets Selection Studio */}
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label className="block text-xs font-bold text-slate-200 flex items-center gap-1.5">
                   <Sparkles className="w-4 h-4 text-amber-400" />
-                  قالب‌های بصری و تم‌های آماده منو (تغییر با ۱ کلیک):
+                  ۱. قالب‌های بصری و تم‌های آماده منو:
                 </label>
                 <span className="text-[11px] text-slate-400">
-                  تم فعال: <strong className="text-rose-400 font-bold">{activeTheme.name}</strong>
+                  قالب فعال: <strong className="text-rose-400 font-bold">{activeTheme.name}</strong>
                 </span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
                 {THEME_PRESETS.map((preset) => {
-                  const isSelected = cafeColor === preset.id || cafeColor === preset.accentColor;
+                  const isSelected = selectedThemeId === preset.id;
                   return (
                     <button
                       key={preset.id}
                       type="button"
-                      onClick={() => setCafeColor(preset.id)}
+                      onClick={() => {
+                        setSelectedThemeId(preset.id);
+                        setCustomAccent(preset.accentColor);
+                      }}
                       className={`p-3.5 rounded-2xl border text-right transition-all flex items-start justify-between gap-3 ${
                         isSelected
                           ? "border-rose-500 bg-slate-800/90 ring-2 ring-rose-500/40 shadow-lg"
@@ -871,12 +1000,94 @@ export default function RestaurantDashboard({ restaurant }: RestaurantDetailsPro
                   );
                 })}
               </div>
+            </div>
+
+            {/* 2. Menu Background Pattern Studio */}
+            <div className="bg-slate-950 p-5 rounded-2xl border border-slate-800">
+              <label className="block text-xs font-bold text-slate-200 mb-1 flex items-center gap-1.5">
+                <Sliders className="w-4 h-4 text-sky-400" />
+                ۲. پترن پس‌زمینه منو (طرح و تکسچر ظریف):
+              </label>
+              <p className="text-[11px] text-slate-400 mb-3">
+                یک بافت و پترن برای پس‌زمینه منوی مشتریان انتخاب کنید تا منو حس واقعی‌تر و اختصاصی‌تری داشته باشد.
+              </p>
+
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+                {PATTERN_OPTIONS.map((opt) => {
+                  const isSelected = selectedPattern === opt.id;
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => setSelectedPattern(opt.id)}
+                      className={`p-3 rounded-xl border text-center transition-all flex flex-col items-center justify-center gap-1.5 ${
+                        isSelected
+                          ? "border-sky-500 bg-sky-950/40 ring-2 ring-sky-500/40 text-white shadow-md"
+                          : "border-slate-800 bg-slate-900 text-slate-400 hover:text-white hover:border-slate-700"
+                      }`}
+                    >
+                      <span className="font-bold text-xs">{opt.name}</span>
+                      <span className="text-[10px] text-slate-400 line-clamp-1">{opt.desc}</span>
+                      {isSelected && (
+                        <span className="text-[9px] bg-sky-500 text-slate-950 px-2 py-0.2 rounded-full font-bold">
+                          انتخاب شده
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* 3. Custom Accent & Signature Color */}
+            <div className="bg-slate-950 p-5 rounded-2xl border border-slate-800">
+              <label className="block text-xs font-bold text-slate-200 mb-1 flex items-center gap-1.5">
+                <Palette className="w-4 h-4 text-amber-400" />
+                ۳. رنگ امضا و دکمه‌های کافه (Accent Color):
+              </label>
+              <p className="text-[11px] text-slate-400 mb-3">
+                می‌توانید از پالت رنگ‌های پرطرفدار کافه‌ای انتخاب کنید یا رنگ دقیق تم کافه‌تان را مشخص نمایید.
+              </p>
+
+              <div className="flex flex-wrap items-center gap-2 mb-3">
+                {CUSTOM_ACCENT_COLORS.map((c, i) => {
+                  const isSelected = customAccent.toLowerCase() === c.hex.toLowerCase();
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => setCustomAccent(c.hex)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs transition-all ${
+                        isSelected
+                          ? "border-white bg-slate-800 text-white font-bold ring-2 ring-white/30"
+                          : "border-slate-800 bg-slate-900 text-slate-400 hover:text-white"
+                      }`}
+                    >
+                      <span className="w-3.5 h-3.5 rounded-full shadow shrink-0" style={{ backgroundColor: c.hex }}></span>
+                      <span>{c.name}</span>
+                    </button>
+                  );
+                })}
+
+                {/* Custom Color Input */}
+                <div className="flex items-center gap-2 bg-slate-900 border border-slate-800 px-3 py-1 rounded-xl">
+                  <span className="text-[11px] text-slate-400">رنگ دلخواه:</span>
+                  <input
+                    type="color"
+                    value={customAccent}
+                    onChange={(e) => setCustomAccent(e.target.value)}
+                    className="w-7 h-7 rounded-lg cursor-pointer bg-transparent border-0"
+                    title="انتخاب رنگ دلخواه"
+                  />
+                  <span className="text-xs font-mono text-slate-300">{customAccent}</span>
+                </div>
+              </div>
 
               {/* Live Theme Preview Box */}
-              <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800">
+              <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 mt-4">
                 <div className="text-[11px] text-slate-400 mb-2 flex items-center justify-between">
                   <span>پیش‌نمایش زنده کارت آیتم در منوی مشتری:</span>
-                  <span className="text-[10px] text-emerald-400 font-medium">✓ همگام با تم انتخابی ({activeTheme.name})</span>
+                  <span className="text-[10px] text-emerald-400 font-medium">✓ تم: {activeTheme.name} | پترن: {PATTERN_OPTIONS.find(p => p.id === selectedPattern)?.name || "ساده"}</span>
                 </div>
                 <div className={`p-4 rounded-xl border ${activeTheme.cardBgClass} transition-all`}>
                   <div className="flex items-center justify-between">
@@ -891,7 +1102,12 @@ export default function RestaurantDashboard({ restaurant }: RestaurantDetailsPro
                   </p>
                   <div className="mt-3 pt-2 border-t border-white/10 flex items-center justify-between text-[10px]">
                     <span className={activeTheme.badgeClass + " px-2 py-0.5 rounded font-medium"}>موجود در منو</span>
-                    <span className={activeTheme.trayButtonBg + " px-2.5 py-1 rounded-lg font-bold"}>+ افزودن به سینی</span>
+                    <span
+                      className="px-2.5 py-1 rounded-lg font-bold text-slate-950 shadow-md"
+                      style={{ backgroundColor: activeTheme.accentColor }}
+                    >
+                      + افزودن به سینی
+                    </span>
                   </div>
                 </div>
               </div>
@@ -997,7 +1213,7 @@ export default function RestaurantDashboard({ restaurant }: RestaurantDetailsPro
               value={menuUrl}
               size={200}
               bgColor="#ffffff"
-              fgColor={cafeColor || "#0f172a"}
+              fgColor={activeTheme.accentColor || "#0f172a"}
               level="H"
               includeMargin={false}
             />

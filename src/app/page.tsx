@@ -44,17 +44,18 @@ export default async function HomePage() {
   const totalScans = restaurants.reduce((acc, r) => acc + r.viewCount, 0);
 
   return (
-    <div className="min-h-screen bg-[#070b14] text-slate-100 font-sans selection:bg-rose-500 selection:text-white">
+    <div className="min-h-screen bg-[#070b14] text-slate-100 font-sans selection:bg-rose-500 selection:text-white overflow-x-hidden">
       {/* Top Navbar */}
       <nav className="border-b border-slate-800/80 bg-slate-900/90 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-600 to-rose-600 flex items-center justify-center text-white shadow-lg shadow-amber-600/20">
-              <Coffee className="w-5 h-5" />
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2">
+          {/* Logo & Brand */}
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 shrink-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-amber-600 to-rose-600 flex items-center justify-center text-white shadow-lg shadow-amber-600/20 shrink-0">
+              <Coffee className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
             </div>
-            <div>
-              <span className="font-extrabold text-lg tracking-tight text-white">MenuSaaS</span>
-              <span className="mr-2 text-[10px] bg-amber-500/15 text-amber-300 border border-amber-500/25 px-2.5 py-0.5 rounded-full font-medium">
+            <div className="flex items-center">
+              <span className="font-extrabold text-base sm:text-lg tracking-tight text-white shrink-0">MenuSaaS</span>
+              <span className="hidden sm:inline-block mr-2 text-[10px] bg-amber-500/15 text-amber-300 border border-amber-500/25 px-2.5 py-0.5 rounded-full font-medium whitespace-nowrap">
                 سامانه منوی دیجیتال کافه
               </span>
             </div>
@@ -69,19 +70,21 @@ export default async function HomePage() {
             <a href="#cafes" className="hover:text-amber-400 transition-colors">کافه‌های فعال</a>
           </div>
 
-          <div className="flex items-center gap-3">
+          {/* Action Buttons */}
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
             <Link
               href="/login"
-              className="bg-slate-800/90 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all"
+              className="bg-slate-800/90 hover:bg-slate-700 text-slate-200 border border-slate-700 px-2.5 sm:px-3.5 py-1.5 rounded-xl text-[11px] sm:text-xs font-semibold flex items-center gap-1 sm:gap-1.5 transition-all shrink-0"
             >
-              <Lock className="w-3.5 h-3.5 text-amber-400" />
-              ورود کافه‌داران
+              <Lock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-400 shrink-0" />
+              <span>ورود<span className="hidden sm:inline"> کافه‌داران</span></span>
             </Link>
             <Link
               href="/login?tab=register"
-              className="bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-md shadow-rose-600/25"
+              className="bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white px-2.5 sm:px-3.5 py-1.5 rounded-xl text-[11px] sm:text-xs font-bold transition-all shadow-md shadow-rose-600/25 shrink-0 whitespace-nowrap"
             >
-              دریافت منوی کافه
+              <span className="sm:hidden">دریافت منو</span>
+              <span className="hidden sm:inline">دریافت منوی کافه</span>
             </Link>
           </div>
         </div>

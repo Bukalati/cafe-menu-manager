@@ -154,8 +154,147 @@ export const THEME_PRESETS: ThemeConfig[] = [
   },
 ];
 
+export const PATTERN_OPTIONS = [
+  { id: "none", name: "ساده و مینیمال", desc: "بدون پترن، رنگ یکدست و خلوت" },
+  { id: "coffee", name: "دانه‌های قهوه", desc: "پترن ظریف باریستا و دانه قهوه" },
+  { id: "dots", name: "نقطه‌چین مدرن", desc: "شبکه نقطه‌ای نوردیک و کافه‌کتاب" },
+  { id: "persian", name: "نقوش هندسی اسلیمی", desc: "کاشی‌کاری ظریف عمارت‌های سنتی" },
+  { id: "lines", name: "بافت خطوط مورب", desc: "تکسچر متالیک و بافت‌دار بیسترو" },
+] as const;
+
+export const CUSTOM_ACCENT_COLORS = [
+  { name: "طلایی کهربایی", hex: "#f59e0b" },
+  { name: "زرشکی سلطنتی", hex: "#e11d48" },
+  { name: "سبز کورتادو", hex: "#10b981" },
+  { name: "آبی کافه‌ای", hex: "#0284c7" },
+  { name: "قهوه‌ای نسکافه‌ای", hex: "#8a4f27" },
+  { name: "بنفش اسپرسو", hex: "#9333ea" },
+  { name: "دارچینی پاییزی", hex: "#ea580c" },
+  { name: "مشکی لوکس", hex: "#334155" },
+];
+
+export const PRESET_CAFE_BANNERS = [
+  {
+    name: "بار اسپرسو و لانژ شبانه",
+    url: "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=1400&auto=format&fit=crop&q=80",
+    desc: "نور گرم و فضای دنج کافه‌بار",
+  },
+  {
+    name: "حیاط عمارت و فضای باز",
+    url: "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=1400&auto=format&fit=crop&q=80",
+    desc: "آرامش گیاهان و معماری سنتی",
+  },
+  {
+    name: "کافه بیکری و شیرینی‌پزی",
+    url: "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=1400&auto=format&fit=crop&q=80",
+    desc: "عطر نان تازه و چوب روسی",
+  },
+  {
+    name: "کافه‌کتاب و قهوه‌تخصصی",
+    url: "https://images.unsplash.com/photo-1442512595331-e89e73853f31?w=1400&auto=format&fit=crop&q=80",
+    desc: "میزهای چوبی و فضای مطالعه",
+  },
+  {
+    name: "رستوران و بیسترو ایتالیایی",
+    url: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1400&auto=format&fit=crop&q=80",
+    desc: "میزهای پرنور و حس شام لوکس",
+  },
+];
+
+export interface ParsedTheme {
+  theme: ThemeConfig;
+  themeId: string;
+  pattern: string;
+  accentColor: string;
+}
+
+export function parseThemeConfig(raw: string | null | undefined): ParsedTheme {
+  if (!raw) {
+    const defaultTheme = THEME_PRESETS[4];
+    return {
+      theme: defaultTheme,
+      themeId: defaultTheme.id,
+      pattern: "none",
+      accentColor: defaultTheme.accentColor,
+    };
+  }
+
+  // Check if raw is format "themeId:pattern:accentColor"
+  if (raw.includes(":")) {
+    const parts = raw.split(":");
+    const themeId = parts[0] || "crimson-velvet";
+    const pattern = parts[1] || "none";
+    const accentColor = parts[2] || "";
+
+    const baseTheme = getTheme(themeId);
+    const finalAccent = accentColor && accentColor.startsWith("#") ? accentColor : baseTheme.accentColor;
+
+    return {
+      theme: {
+        ...baseTheme,
+        accentColor: finalAccent,
+      },
+      themeId: baseTheme.id,
+      pattern,
+      accentColor: finalAccent,
+    };
+  }
+
+  const baseTheme = getTheme(raw);
+  return {
+    theme: baseTheme,
+    themeId: baseTheme.id,
+    pattern: "none",
+    accentColor: baseTheme.accentColor,
+  };
+}
+
+export function encodeThemeConfig(themeId: string, pattern: string, accentColor?: string): string {
+  const p = pattern || "none";
+  const c = accentColor || "";
+  return `${themeId}:${p}:${c}`;
+}
+
+export function getPatternStyle(pattern: string | null | undefined, isDark: boolean = true): React.CSSProperties {
+  if (!pattern || pattern === "none") return {};
+
+  const opacity = isDark ? "0.04" : "0.035";
+  const strokeOpacity = isDark ? "0.06" : "0.05";
+  const fill = isDark ? "%23ffffff" : "%23000000";
+
+  switch (pattern) {
+    case "coffee":
+      return {
+        backgroundImage: `url("data:image/svg+xml,%3Csvg width='56' height='56' viewBox='0 0 56 56' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M28 18c-5.5 0-10 4.5-10 10s4.5 10 10 10 10-4.5 10-10-4.5-10-10-10zm-1.2 2.8c3.5 1.7 4.8 5.2 4.8 7.2 0 2.8-2.2 5-5 5-2.8 0-4.5-2.2-4.5-4.8 0-3.5 2.2-6.2 4.7-7.4z' fill='${fill}' fill-opacity='${opacity}' fill-rule='evenodd'/%3E%3C/svg%3E")`,
+        backgroundRepeat: "repeat",
+      };
+    case "dots":
+      return {
+        backgroundImage: `url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='12' cy='12' r='1.5' fill='${fill}' fill-opacity='${opacity}'/%3E%3C/svg%3E")`,
+        backgroundRepeat: "repeat",
+      };
+    case "persian":
+      return {
+        backgroundImage: `url("data:image/svg+xml,%3Csvg width='44' height='44' viewBox='0 0 44 44' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M22 0l22 22-22 22L0 22z' fill='none' stroke='${fill}' stroke-width='1.2' stroke-opacity='${strokeOpacity}'/%3E%3C/svg%3E")`,
+        backgroundRepeat: "repeat",
+      };
+    case "lines":
+      return {
+        backgroundImage: `url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 24L24 0H12L0 12v12zM12 24l12-12v12H12z' fill='${fill}' fill-opacity='${opacity}'/%3E%3C/svg%3E")`,
+        backgroundRepeat: "repeat",
+      };
+    default:
+      return {};
+  }
+}
+
 export function getTheme(presetIdOrHex: string | null | undefined): ThemeConfig {
   if (!presetIdOrHex) return THEME_PRESETS[4]; // Default Crimson Velvet
+
+  // If encoded composite string
+  if (presetIdOrHex.includes(":")) {
+    return parseThemeConfig(presetIdOrHex).theme;
+  }
 
   // Match by ID
   const found = THEME_PRESETS.find((p) => p.id === presetIdOrHex);

@@ -32,7 +32,7 @@ export async function POST(req: Request) {
         address: address ? String(address).trim().slice(0, 200) : null,
         instagram: instagram ? String(instagram).trim().replace(/^@/, "").slice(0, 50) : null,
         wifiPassword: wifiPassword ? String(wifiPassword).trim().slice(0, 60) : null,
-        themeColor: themeColor ? String(themeColor).trim().slice(0, 40) : "#e11d48",
+        themeColor: themeColor ? String(themeColor).trim().slice(0, 100) : "#e11d48",
         logoUrl: logoUrl ? String(logoUrl).trim() : null,
         coverUrl: coverUrl ? String(coverUrl).trim() : null,
       },
