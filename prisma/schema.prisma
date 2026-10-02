@@ -1,0 +1,107 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL_UNPOOLED")
+}
+
+model User {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  phone        String?
+  name         String
+  passwordHash String
+  role         String        @default("RESTAURANT_ADMIN") // SUPER_ADMIN, RESTAURANT_ADMIN, INSPECTOR
+  restaurants  Restaurant[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model Restaurant {
+  id            String         @id @default(cuid())
+  userId        String
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  slug          String         @unique
+  name          String
+  description   String?
+  logoUrl       String?
+  coverUrl      String?
+  phone         String?
+  address       String?
+  instagram     String?
+  wifiPassword  String?
+  themeColor    String         @default("#e11d48") // Hex code
+  isActive      Boolean        @default(true)
+  viewCount     Int            @default(0)
+  categories    Category[]
+  menuItems     MenuItem[]
+  subscriptions Subscription[]
+  transactions  Transaction[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model Category {
+  id           String     @id @default(cuid())
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  title        String
+  orderIndex   Int        @default(0)
+  icon         String?    // e.g. "coffee", "pizza", "dessert"
+  items        MenuItem[]
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model MenuItem {
+  id           String     @id @default(cuid())
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  categoryId   String
+  category     Category   @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  title        String
+  description  String?
+  price        Int        // Price in Tomans (e.g. 95000)
+  imageUrl     String?
+  isAvailable  Boolean    @default(true)
+  orderIndex   Int        @default(0)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model Subscription {
+  id            String        @id @default(cuid())
+  restaurantId  String
+  restaurant    Restaurant    @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  planName      String        // e.g. "اشتراک طلایی یک‌ساله"
+  amount        Int           // e.g. 1000000 (Tomans)
+  status        String        @default("ACTIVE") // ACTIVE, EXPIRED, PENDING
+  startDate     DateTime      @default(now())
+  endDate       DateTime
+  paymentMethod String        @default("ONLINE") // ONLINE, CARD_TO_CARD
+  trackingCode  String?
+  receiptUrl    String?
+  isApproved    Boolean       @default(true)
+  transactions  Transaction[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model Transaction {
+  id             String        @id @default(cuid())
+  restaurantId   String
+  restaurant     Restaurant    @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  subscriptionId String?
+  subscription   Subscription? @relation(fields: [subscriptionId], references: [id])
+  amount         Int           // in Tomans
+  status         String        @default("SUCCESS") // SUCCESS, FAILED, PENDING
+  trackingCode   String        @unique
+  gateway        String        @default("ZarinPal") // ZarinPal, CardToCard, Sandbox
+  paidAt         DateTime      @default(now())
+  createdAt      DateTime      @default(now())
+}
