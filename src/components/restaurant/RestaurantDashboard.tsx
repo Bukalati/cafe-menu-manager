@@ -102,6 +102,7 @@ export default function RestaurantDashboard({ restaurant }: RestaurantDetailsPro
   const [categories, setCategories] = useState<CategoryData[]>(restaurant.categories || []);
   const [activeCategory, setActiveCategory] = useState<string>(restaurant.categories?.[0]?.id || "");
   const [newCatTitle, setNewCatTitle] = useState("");
+  const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
 
   // New Item State (Default image from preset)
   const [newItemTitle, setNewItemTitle] = useState("");
@@ -328,6 +329,7 @@ export default function RestaurantDashboard({ restaurant }: RestaurantDetailsPro
         setCategories([...categories, { ...newCat, items: [] }]);
         setActiveCategory(newCat.id);
         setNewCatTitle("");
+        setShowAddCategoryModal(false);
       }
     } catch {
       alert("خطا در ایجاد دسته‌بندی");
@@ -391,9 +393,9 @@ export default function RestaurantDashboard({ restaurant }: RestaurantDetailsPro
       <div className="max-w-7xl mx-auto mb-8 flex flex-col md:flex-row items-center justify-between gap-4 bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
         <div className="flex items-center gap-3">
           <Link
-            href="/admin"
+            href="/"
             className="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
-            title="بازگشت به پنل مدیریت"
+            title="بازگشت به صفحه اصلی سایت"
           >
             <ArrowRight className="w-5 h-5" />
           </Link>
@@ -509,22 +511,15 @@ export default function RestaurantDashboard({ restaurant }: RestaurantDetailsPro
                   </p>
                 </div>
 
-                {/* Add Category Form */}
-                <form onSubmit={handleAddCategory} className="flex items-center gap-2 w-full sm:w-auto">
-                  <input
-                    type="text"
-                    value={newCatTitle}
-                    onChange={(e) => setNewCatTitle(e.target.value)}
-                    placeholder="نام دسته جدید..."
-                    className="bg-slate-950 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-rose-500 w-36"
-                  />
-                  <button
-                    type="submit"
-                    className="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap"
-                  >
-                    + افزودن دسته
-                  </button>
-                </form>
+                {/* Add Category Trigger Button */}
+                <button
+                  type="button"
+                  onClick={() => setShowAddCategoryModal(true)}
+                  className="bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 text-white px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 shadow-lg shadow-rose-600/30 transition-all shrink-0"
+                >
+                  <PlusCircle className="w-4 h-4" />
+                  <span>+ افزودن دسته‌بندی جدید</span>
+                </button>
               </div>
 
               {/* Category Tabs */}
@@ -542,6 +537,16 @@ export default function RestaurantDashboard({ restaurant }: RestaurantDetailsPro
                     {cat.title} ({formatPersianNumber(cat.items?.length || 0)})
                   </button>
                 ))}
+
+                {/* Add Category Quick Pill Button */}
+                <button
+                  type="button"
+                  onClick={() => setShowAddCategoryModal(true)}
+                  className="px-4 py-2 rounded-xl text-xs font-bold border-2 border-dashed border-rose-500/40 hover:border-rose-400 text-rose-400 hover:text-white hover:bg-rose-500/10 flex items-center gap-1.5 shrink-0 transition-all"
+                >
+                  <PlusCircle className="w-3.5 h-3.5" />
+                  <span>دسته‌بندی جدید +</span>
+                </button>
               </div>
 
               {/* Items List */}
@@ -1159,6 +1164,96 @@ export default function RestaurantDashboard({ restaurant }: RestaurantDetailsPro
                   type="button"
                   onClick={() => setEditingItem(null)}
                   className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl"
+                >
+                  انصراف
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Add Category Modal */}
+      {showAddCategoryModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-700 rounded-3xl max-w-md w-full p-6 shadow-2xl relative">
+            <button
+              type="button"
+              onClick={() => {
+                setShowAddCategoryModal(false);
+                setNewCatTitle("");
+              }}
+              className="absolute left-4 top-4 text-slate-400 hover:text-white text-xs bg-slate-800 p-1.5 rounded-lg"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-9 h-9 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center">
+                <Layers className="w-5 h-5" />
+              </div>
+              <h3 className="font-black text-base text-white">افزودن دسته‌بندی جدید به منو</h3>
+            </div>
+            <p className="text-xs text-slate-400 mb-5">
+              برای نظم دادن به منو، یک دسته‌بندی جدید (مانند بار سرد، پاستا، دسر و...) تعریف کنید.
+            </p>
+
+            <form onSubmit={handleAddCategory} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-200 mb-1.5">
+                  نام دسته‌بندی منو:
+                </label>
+                <input
+                  type="text"
+                  required
+                  autoFocus
+                  value={newCatTitle}
+                  onChange={(e) => setNewCatTitle(e.target.value)}
+                  placeholder="مثلاً: نوشیدنی‌های گرم، بار سرد و ماکتیل، پاستا..."
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-rose-500 shadow-inner"
+                />
+              </div>
+
+              {/* Quick Suggestion Chips */}
+              <div>
+                <span className="block text-[11px] text-slate-400 mb-1.5">پیشنهادات پرکاربرد (کلیک کنید):</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    "نوشیدنی گرم ☕",
+                    "بار سرد و ماکتیل 🍹",
+                    "کیک و دسر 🍰",
+                    "صبحانه و برانچ 🍳",
+                    "غذای اصلی و پاستا 🍝",
+                    "برگر و ساندویچ 🍔",
+                    "سالاد و پیش‌غذا 🥗",
+                  ].map((chip) => (
+                    <button
+                      key={chip}
+                      type="button"
+                      onClick={() => setNewCatTitle(chip)}
+                      className="text-[11px] bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white px-2.5 py-1 rounded-lg border border-slate-700 transition-colors"
+                    >
+                      {chip}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 pt-3 border-t border-slate-800">
+                <button
+                  type="submit"
+                  className="flex-1 bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 text-white font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-rose-600/30 transition-all"
+                >
+                  <Check className="w-4 h-4" />
+                  <span>تأیید و ایجاد دسته‌بندی</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAddCategoryModal(false);
+                    setNewCatTitle("");
+                  }}
+                  className="px-4 py-2.5 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white transition-colors"
                 >
                   انصراف
                 </button>

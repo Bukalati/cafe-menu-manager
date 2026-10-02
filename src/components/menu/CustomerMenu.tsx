@@ -20,7 +20,9 @@ import {
   X,
   ChevronRight,
   Info,
+  QrCode,
 } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 import { formatToman, formatPersianNumber } from "@/lib/utils";
 import { getTheme } from "@/lib/themes";
 
@@ -116,11 +118,11 @@ export default function CustomerMenu({ restaurant }: CustomerMenuProps) {
     setShowTrayModal(false);
   };
 
-  const handleCopyTraySummary = () => {
+  const getTraySummaryText = () => {
     const selectedEntries = Object.entries(tray).filter(([_, qty]) => qty > 0);
-    if (selectedEntries.length === 0) return;
+    if (selectedEntries.length === 0) return "";
 
-    let text = `📋 یادداشت سفارش میز - ${restaurant.name}\n`;
+    let text = `📋 سفارش میز - ${restaurant.name}\n`;
     text += `─────────────\n`;
     selectedEntries.forEach(([id, qty]) => {
       const item = allItems.find((i) => i.id === id);
@@ -130,6 +132,12 @@ export default function CustomerMenu({ restaurant }: CustomerMenuProps) {
     });
     text += `─────────────\n`;
     text += `💰 جمع کل فاکتور: ${formatToman(totalTrayPrice)}`;
+    return text;
+  };
+
+  const handleCopyTraySummary = () => {
+    const text = getTraySummaryText();
+    if (!text) return;
 
     navigator.clipboard.writeText(text);
     setCopiedTrayText(true);
@@ -578,8 +586,33 @@ export default function CustomerMenu({ restaurant }: CustomerMenuProps) {
               </button>
             </div>
 
+            {/* Quick Waiter Scan QR Code Section */}
+            <div className="bg-black/30 dark:bg-white/5 border border-white/10 rounded-2xl p-3 my-2.5 flex items-center gap-3 shadow-inner shrink-0">
+              <div className="bg-white p-2 rounded-xl shadow-md shrink-0 flex items-center justify-center">
+                <QRCodeSVG
+                  value={getTraySummaryText()}
+                  size={95}
+                  bgColor="#ffffff"
+                  fgColor="#0f172a"
+                  level="M"
+                />
+              </div>
+              <div className="flex-1 min-w-0 text-right">
+                <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold mb-1">
+                  <QrCode className="w-3 h-3" />
+                  اسکن بارکد توسط سالن‌دار
+                </div>
+                <h4 className={`font-bold text-xs ${theme.textPrimary}`}>
+                  انتقال آنی سفارش به ویتر
+                </h4>
+                <p className={`text-[10px] ${theme.textSecondary} mt-0.5 leading-relaxed`}>
+                  سالن‌دار می‌تواند با اسکن این بارکد، اقلام سفارش و مبلغ کل را فوراً دریافت و ثبت نماید.
+                </p>
+              </div>
+            </div>
+
             {/* Items in Tray List */}
-            <div className="flex-1 overflow-y-auto py-4 space-y-3">
+            <div className="flex-1 overflow-y-auto py-2 space-y-3">
               {Object.entries(tray).map(([id, qty]) => {
                 const item = allItems.find((i) => i.id === id);
                 if (!item || qty <= 0) return null;
