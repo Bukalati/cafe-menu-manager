@@ -18,22 +18,23 @@ export async function POST(req: Request) {
       coverUrl,
     } = body;
 
-    if (!id || !name) {
+    const cleanName = String(name).trim().slice(0, 100);
+    if (!id || !cleanName) {
       return NextResponse.json({ error: "شناسه و نام رستوران الزامی است" }, { status: 400 });
     }
 
     const updated = await prisma.restaurant.update({
-      where: { id },
+      where: { id: String(id).trim() },
       data: {
-        name,
-        description: description || null,
-        phone: phone || null,
-        address: address || null,
-        instagram: instagram || null,
-        wifiPassword: wifiPassword || null,
-        themeColor: themeColor || "#e11d48",
-        logoUrl: logoUrl || null,
-        coverUrl: coverUrl || null,
+        name: cleanName,
+        description: description ? String(description).trim().slice(0, 500) : null,
+        phone: phone ? String(phone).trim().slice(0, 30) : null,
+        address: address ? String(address).trim().slice(0, 200) : null,
+        instagram: instagram ? String(instagram).trim().replace(/^@/, "").slice(0, 50) : null,
+        wifiPassword: wifiPassword ? String(wifiPassword).trim().slice(0, 60) : null,
+        themeColor: themeColor ? String(themeColor).trim().slice(0, 40) : "#e11d48",
+        logoUrl: logoUrl ? String(logoUrl).trim() : null,
+        coverUrl: coverUrl ? String(coverUrl).trim() : null,
       },
     });
 

@@ -35,16 +35,38 @@ export async function PUT(
     const body = await req.json();
     const { title, price, description, imageUrl, isAvailable, categoryId } = body;
 
+    const updateData: Record<string, unknown> = {};
+
+    if (title && typeof title === "string") {
+      updateData.title = title.trim().slice(0, 100);
+    }
+
+    if (typeof price === "number") {
+      if (isNaN(price) || price < 0 || price > 100000000) {
+        return NextResponse.json({ error: "قیمت وارد شده نامعتبر است" }, { status: 400 });
+      }
+      updateData.price = Math.round(price);
+    }
+
+    if (typeof description !== "undefined") {
+      updateData.description = description ? String(description).trim().slice(0, 500) : null;
+    }
+
+    if (typeof imageUrl !== "undefined") {
+      updateData.imageUrl = imageUrl ? String(imageUrl).trim() : null;
+    }
+
+    if (typeof isAvailable === "boolean") {
+      updateData.isAvailable = isAvailable;
+    }
+
+    if (categoryId && typeof categoryId === "string") {
+      updateData.categoryId = categoryId.trim();
+    }
+
     const updated = await prisma.menuItem.update({
       where: { id },
-      data: {
-        ...(title ? { title } : {}),
-        ...(typeof price === "number" ? { price } : {}),
-        ...(typeof description !== "undefined" ? { description } : {}),
-        ...(typeof imageUrl !== "undefined" ? { imageUrl } : {}),
-        ...(typeof isAvailable === "boolean" ? { isAvailable } : {}),
-        ...(categoryId ? { categoryId } : {}),
-      },
+      data: updateData,
     });
 
     return NextResponse.json(updated);

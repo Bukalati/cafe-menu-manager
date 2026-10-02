@@ -28,14 +28,9 @@ export default async function PublicMenuPage({
     notFound();
   }
 
-  // Increment view count to record scan activity
-  const restaurant = await prisma.restaurant.update({
+  // Fetch full restaurant details
+  const restaurant = await prisma.restaurant.findUnique({
     where: { id: target.id },
-    data: {
-      viewCount: {
-        increment: 1,
-      },
-    },
     include: {
       categories: {
         orderBy: { orderIndex: "asc" },
@@ -47,6 +42,20 @@ export default async function PublicMenuPage({
       },
     },
   });
+
+  if (!restaurant) {
+    notFound();
+  }
+
+  // Non-blocking scan activity counter (ensures menu always loads with zero delay)
+  prisma.restaurant
+    .update({
+      where: { id: target.id },
+      data: { viewCount: { increment: 1 } },
+    })
+    .catch((err) => {
+      console.warn("ViewCount update non-critical warning:", err);
+    });
 
   return <CustomerMenu restaurant={restaurant} />;
 }

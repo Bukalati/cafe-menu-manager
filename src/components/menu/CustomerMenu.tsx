@@ -586,29 +586,30 @@ export default function CustomerMenu({ restaurant }: CustomerMenuProps) {
               </button>
             </div>
 
-            {/* Quick Waiter Scan QR Code Section */}
-            <div className="bg-black/30 dark:bg-white/5 border border-white/10 rounded-2xl p-3 my-2.5 flex items-center gap-3 shadow-inner shrink-0">
-              <div className="bg-white p-2 rounded-xl shadow-md shrink-0 flex items-center justify-center">
-                <QRCodeSVG
-                  value={getTraySummaryText()}
-                  size={95}
-                  bgColor="#ffffff"
-                  fgColor="#0f172a"
-                  level="M"
-                />
+            {/* Quick Waiter Scan QR Code Section (Enlarged & High-Contrast) */}
+            <div className="bg-black/40 dark:bg-white/5 border border-white/15 rounded-2xl p-4 my-2 text-center shadow-lg shrink-0">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-bold mb-3">
+                <QrCode className="w-4 h-4" />
+                <span>بارکد اسکن سریع سفارش توسط ویتر</span>
               </div>
-              <div className="flex-1 min-w-0 text-right">
-                <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold mb-1">
-                  <QrCode className="w-3 h-3" />
-                  اسکن بارکد توسط سالن‌دار
+
+              {/* Large, high-contrast, easily scannable QR Code */}
+              <div className="flex justify-center my-1">
+                <div className="bg-white p-3.5 rounded-2xl shadow-xl border-4 border-white/90 inline-block">
+                  <QRCodeSVG
+                    value={getTraySummaryText()}
+                    size={185}
+                    bgColor="#ffffff"
+                    fgColor="#0a0f1d"
+                    level="L"
+                    includeMargin={false}
+                  />
                 </div>
-                <h4 className={`font-bold text-xs ${theme.textPrimary}`}>
-                  انتقال آنی سفارش به ویتر
-                </h4>
-                <p className={`text-[10px] ${theme.textSecondary} mt-0.5 leading-relaxed`}>
-                  سالن‌دار می‌تواند با اسکن این بارکد، اقلام سفارش و مبلغ کل را فوراً دریافت و ثبت نماید.
-                </p>
               </div>
+
+              <p className={`text-[11px] ${theme.textSecondary} mt-2.5 max-w-xs mx-auto leading-relaxed`}>
+                ویتر یا سالن‌دار کافیست دوربین گوشی خود را روی این بارکد بگیرد تا اقلام سفارش و فاکتور میز در لحظه ثبت شود.
+              </p>
             </div>
 
             {/* Items in Tray List */}

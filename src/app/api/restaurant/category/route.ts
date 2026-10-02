@@ -7,17 +7,18 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { restaurantId, title, icon } = body;
 
-    if (!restaurantId || !title) {
+    const cleanTitle = String(title).trim().slice(0, 60);
+    if (!restaurantId || !cleanTitle) {
       return NextResponse.json({ error: "عنوان دسته‌بندی الزامی است" }, { status: 400 });
     }
 
-    const count = await prisma.category.count({ where: { restaurantId } });
+    const count = await prisma.category.count({ where: { restaurantId: String(restaurantId).trim() } });
 
     const category = await prisma.category.create({
       data: {
-        restaurantId,
-        title,
-        icon: icon || "Layers",
+        restaurantId: String(restaurantId).trim(),
+        title: cleanTitle,
+        icon: icon ? String(icon).slice(0, 30) : "Layers",
         orderIndex: count + 1,
       },
       include: {
